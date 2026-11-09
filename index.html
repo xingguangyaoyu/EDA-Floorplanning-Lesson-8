@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab 08 — Soft module aspect sizing · 软模块宽高比变形</title>
+<style>
+:root{--bg:#0b1220;--panel:#111a30;--panel2:#0e1626;--line:#243352;--ink:#e6edf7;--muted:#94a3b8;--dim:#64748b;--teal:#2dd4bf;--teal-d:#0f766e;--amber:#f59e0b;--rose:#fb7185;--green:#34d399;--red:#ef4444}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.7 "Segoe UI",system-ui,-apple-system,"Microsoft YaHei",Arial,sans-serif}
+body.lang-zh .en{display:none!important}
+body.lang-en .zh{display:none!important}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 20px 80px}
+a{color:var(--teal)}
+h2{font-size:24px;margin:52px 0 12px;scroll-margin-top:16px}
+h3{font-size:16px;margin:0 0 6px}
+p{max-width:72ch}
+.eyebrow{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);font-weight:700;margin:0}
+.pill{border:1px solid var(--line);border-radius:999px;padding:3px 12px;font-size:13px;color:var(--muted);font-family:ui-monospace,Consolas,monospace}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.langswitch{display:flex;gap:6px;align-items:center}
+.langswitch button{font-size:14px;padding:6px 12px;min-height:38px}
+.hero h1{font-size:40px;line-height:1.2;margin:10px 0 8px}
+.promise{color:var(--muted);font-size:17px;margin:0 0 16px;max-width:72ch}
+.chips{display:flex;gap:8px;flex-wrap:wrap;list-style:none;padding:0;margin:0 0 18px}
+.chips li{border:1px solid var(--line);border-radius:999px;padding:4px 14px;font-size:14px;color:var(--muted);font-family:ui-monospace,Consolas,monospace}
+.cta{display:inline-block;background:var(--teal-d);border:1px solid var(--teal);color:#fff;border-radius:10px;padding:11px 22px;font-weight:600;text-decoration:none;font-size:17px}
+.cta:hover{filter:brightness(1.15)}
+video{width:100%;border:1px solid var(--line);border-radius:12px;background:#000;display:block}
+.note{color:var(--dim);font-size:13px;margin:8px 0 0}
+.grid3{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.card{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--panel)}
+.card p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.duo{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));align-items:start}
+figure{margin:0;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:12px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{color:var(--dim);font-size:13px;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+th,td{border-bottom:1px solid var(--line);padding:8px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+td.mono,.mono{font-family:ui-monospace,Consolas,monospace;color:var(--teal)}
+.good{color:var(--green)}.bad{color:var(--rose)}
+.lab{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:16px;margin-top:10px}
+.labgrid{display:grid;gap:16px;grid-template-columns:minmax(300px,1.1fr) minmax(280px,1fr)}
+@media (max-width:840px){.labgrid{grid-template-columns:1fr}}
+#fp{width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel2);touch-action:manipulation}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px}
+button{font:inherit;border:1px solid var(--line);background:var(--panel2);border-radius:8px;padding:9px 14px;cursor:pointer;color:var(--ink);min-height:44px}
+button:hover{border-color:var(--teal);color:var(--teal)}
+button[aria-pressed="true"]{background:var(--teal-d);border-color:var(--teal);color:#fff}
+button:disabled{opacity:.45;cursor:default}
+button:disabled:hover{border-color:var(--line);color:var(--ink)}
+select,input[type=range]{font:inherit}
+.readout{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--panel2)}
+.readout .metrics{font-family:ui-monospace,Consolas,monospace;font-size:15px;line-height:1.9;margin:0}
+.m-ok{color:var(--green)}.m-bad{color:var(--rose)}.m-dim{color:var(--muted)}
+.stages{list-style:none;padding:0;margin:10px 0 0}
+.stages li{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:6px 0;background:var(--panel2);font-size:14px}
+.stages li.current{border-color:var(--teal)}
+.stages li.done{border-color:transparent;outline:1px solid var(--green)}
+.stages .tag{font-family:ui-monospace,Consolas,monospace;color:var(--dim);margin-right:8px}
+.stages li.done .tag{color:var(--green)}
+#msg{min-height:44px;border:1px dashed var(--line);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--muted);margin:10px 0}
+#msg.good{border-color:var(--green);color:var(--green)}
+#msg.bad{border-color:var(--rose);color:var(--rose)}
+.hintbox{border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:14px;color:var(--amber);margin:8px 0;min-height:20px}
+.badge{display:none;border:1px solid var(--green);color:var(--green);border-radius:999px;padding:3px 12px;font-size:13px;margin-top:8px}
+.badge.show{display:inline-block}
+details{border:1px solid var(--line);border-radius:12px;padding:12px 16px;background:var(--panel);margin:10px 0}
+summary{cursor:pointer;font-weight:600}
+details p{margin:10px 0;color:var(--muted)}
+.quiz{border:1px solid var(--line);border-radius:12px;padding:16px 18px;background:var(--panel)}
+.q{border-top:1px solid var(--line);padding:14px 0 6px}
+.q:first-child{border-top:0;padding-top:4px}
+.q p.prompt{font-weight:600;margin:0 0 8px}
+.opts{display:grid;gap:6px}
+.opt{text-align:left;border:1px solid var(--line);border-radius:8px;padding:9px 12px;background:var(--panel2);cursor:pointer;font-size:15px;min-height:44px}
+.opt.correct{border-color:var(--green);background:#0c2a22}
+.opt.wrong{border-color:var(--red);background:#2a1214}
+.opt:disabled{cursor:default}
+.explain{display:none;color:var(--muted);font-size:14px;margin:8px 0 0;max-width:72ch}
+.explain.show{display:block}
+.chapters{list-style:none;padding:0;margin:10px 0;display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.chapters button{width:100%;text-align:left;font-family:ui-monospace,Consolas,monospace;font-size:14px}
+.glossary{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.glossary dt{font-weight:600;color:var(--teal);font-family:ui-monospace,Consolas,monospace}
+.glossary dd{margin:2px 0 0;color:var(--muted);font-size:14px}
+.gallery{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));margin-top:10px}
+.gallery a{border:1px solid var(--line);border-radius:10px;overflow:hidden;display:block;background:#000}
+.gallery img{width:100%;display:block}
+footer{margin-top:52px;color:var(--dim);font-size:13px;border-top:1px solid var(--line);padding-top:14px}
+ul.tight{margin:6px 0;padding-left:22px}
+ul.tight li{margin:6px 0;max-width:72ch}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body class="lang-zh">
+<div class="wrap top">
+  <p class="eyebrow">Floorplanning for EDA · Lab 08</p>
+  <div class="langswitch" role="group" aria-label="语言 / Language">
+    <button type="button" id="btn-zh" aria-pressed="true" lang="zh-CN">中文</button>
+    <button type="button" id="btn-en" aria-pressed="false" lang="en">English</button>
+  </div>
+</div>
+<main class="wrap">
+
+  <header class="hero" id="top">
+    <h1><span class="zh">软模块的宽高比变形</span><span class="en">Soft module aspect sizing</span></h1>
+    <p class="promise">
+      <span class="zh">一块电路的面积是定的，但长和宽可以换。在"面积不变、长宽比不越界"的前提下换形状，再把周围的模块重摆一遍，让整块芯片塞得更紧 —— 每一步的数字都能手算核对。</span>
+      <span class="en">One module is free to change shape — as long as its area stays 6 and its width-to-height ratio stays between 0.5 and 2. Reshape it, re-pack the four hard modules around it, and judge the result with numbers you can check by hand.</span>
+    </p>
+    <ul class="chips"><li>7:00</li><li>10×8</li><li>57</li><li>28.75%</li></ul>
+    <a class="cta" href="#lab"><span class="zh">直接打开实验</span><span class="en">Open the lab</span></a>
+  </header>
+
+  <section id="video">
+    <h2><span class="zh">先看视频</span><span class="en">Watch first</span></h2>
+    <p>
+      <span class="zh">英文讲解，中英双轨软字幕（可切可关）。下面按主题列了时间戳，点一下直接跳过去。</span>
+      <span class="en">English narration with soft bilingual subtitles (switchable, can be turned off). Chapters below jump straight to a topic.</span>
+    </p>
+    <video controls preload="metadata" poster="poster.png">
+      <source src="video.mp4" type="video/mp4">
+      <track kind="subtitles" srclang="en" label="English" src="subs-en.vtt" default>
+      <track kind="subtitles" srclang="zh" label="中文" src="subs-zh.vtt">
+    </video>
+    <p class="note">
+      <span class="zh">字幕是软字幕：播放器里可以切英文 / 中文 / 关掉。如果你的浏览器拦住了字幕文件，页面会自动重新挂载一次。</span>
+      <span class="en">Subtitles are soft: switch or turn them off in the player menu. If your browser blocks the track file, the page remounts it automatically.</span>
+    </p>
+    <ol class="chapters" id="chapters"></ol>
+  </section>
+
+  <section id="outcomes">
+    <h2><span class="zh">学完你能做什么</span><span class="en">What you will be able to do</span></h2>
+    <ul class="tight">
+      <li>
+        <span class="zh"><strong>在两条约束下变形一个软模块</strong> —— 面积守恒（w·h = 6）＋ 宽高比在 [0.5, 2] 内，并能说出面积 6 的整数形状里哪几个同时满足两条。</span>
+        <span class="en"><strong>Reshape a soft module</strong> under two locked constraints — area preserved (w·h = 6) and aspect w/h inside [0.5, 2] — and say which integer shapes survive both.</span>
+      </li>
+      <li>
+        <span class="zh"><strong>变形之后重摆邻居</strong>，并解释为什么硬模块的旧坐标是照着旧形状调好的。</span>
+        <span class="en"><strong>Re-pack the neighbors</strong> after a reshape, and explain why the old coordinates of hard modules are tuned to the old shape.</span>
+      </li>
+      <li>
+        <span class="zh"><strong>像检查器一样判一个布局</strong>：每个模块都在 10×8 外框内、没有正面积重叠；边贴边是允许的。</span>
+        <span class="en"><strong>Judge a packing like the checker does</strong>: every module inside the 10×8 outline, no positive-area overlap, edge-touching allowed.</span>
+      </li>
+      <li>
+        <span class="zh"><strong>读四个数</strong> —— moduleArea 23、outlineArea 80、deadspace 57、density 28.75% —— 并能指出变形能改哪个、改不了哪个。</span>
+        <span class="en"><strong>Read the four numbers</strong> — moduleArea 23, outlineArea 80, deadspace 57, density 28.75% — and state which of them a reshape can and cannot change.</span>
+      </li>
+      <li>
+        <span class="zh"><strong>分清"合法"和"摆得好"</strong>：五块散着放也合法，外接矩形却还是整个框；能把它压到 6×4 = 24。</span>
+        <span class="en"><strong>Tell legal apart from good</strong>: five scattered modules still pass the checker with a 10×8 bounding box; you can shrink it to 6×4 = 24.</span>
+      </li>
+    </ul>
+  </section>
+
+  <section id="prereq">
+    <h2><span class="zh">先备知识</span><span class="en">Before you start</span></h2>
+    <div class="grid3">
+      <div class="card">
+        <h3><span class="zh">固定外框</span><span class="en">Fixed outline</span></h3>
+        <p>
+          <span class="zh">容器是一个不能移动、不能变大的矩形。这里是 10 列 × 8 行 = 80 格。"合法"永远是相对这个框说的。</span>
+          <span class="en">The container never moves or grows. Here it is 10 columns × 8 rows = 80 cells. "Legal" is always measured against this frame.</span>
+        </p>
+      </div>
+      <div class="card">
+        <h3><span class="zh">模块 · 面积 · 标准答案</span><span class="en">Module, area, golden</span></h3>
+        <p>
+          <span class="zh">一个<em>模块</em>就是要摆进去的一个矩形，它的<em>面积</em>是 w×h。一个<em>标准答案（golden）</em>是一组已知可行的摆法，用来对照 —— 不是唯一正确的摆法。</span>
+          <span class="en">A <em>module</em> is one rectangle to place; its <em>area</em> is w·h. A <em>golden</em> is one known-good packing used as a reference — not the only legal answer.</span>
+        </p>
+      </div>
+      <div class="card">
+        <h3><span class="zh">死区与密度</span><span class="en">Deadspace and density</span></h3>
+        <p>
+          <span class="zh">死区 = 外框面积 − 模块面积和；密度 = 模块面积 ÷ 外框面积。这两个数只由面积决定，任何摆法都改不了。</span>
+          <span class="en">Deadspace = outline area − sum of module areas. Density = module area ÷ outline area. Both come from the areas alone.</span>
+        </p>
+      </div>
+    </div>
+    <p class="note">
+      <span class="zh">从<a href="https://universal-verification-methodology.github.io/learning/" rel="noopener" target="_blank">课程平台</a>过来的话：这里的迷你算例和浏览器实验工具用的是同一个。</span>
+      <span class="en">Coming from <a href="https://universal-verification-methodology.github.io/learning/" rel="noopener" target="_blank">the course platform</a>? This tiny instance is the same one the browser tools use.</span>
+    </p>
+  </section>
+
+  <section id="picture">
+    <h2><span class="zh">一张图看懂：同样的面积预算，两种摆法</span><span class="en">One picture: same budget, two floor plans</span></h2>
+    <div class="duo">
+      <figure>
+        <svg id="mini-hard" viewBox="0 0 220 190" role="img" aria-label="硬模块标准布局"></svg>
+        <figcaption>
+          <span class="zh">硬布局：A 保持 3×2。A(0,0) · B(3,0) · C(5,0) · D(0,2) · E(7,0)。（示意图，example run）</span>
+          <span class="en">Hard golden — A keeps 3×2. A(0,0) · B(3,0) · C(5,0) · D(0,2) · E(7,0). (drawing, example run)</span>
+        </figcaption>
+      </figure>
+      <figure>
+        <svg id="mini-soft" viewBox="0 0 220 190" role="img" aria-label="软模块标准布局"></svg>
+        <figcaption>
+          <span class="zh">软布局：A 改成 2×3，邻居重摆。A(0,0) · B(2,0) · C(4,0) · D(4,2) · E(7,0)。（示意图，example run）</span>
+          <span class="en">Soft golden — A reshaped to 2×3. A(0,0) · B(2,0) · C(4,0) · D(4,2) · E(7,0). (drawing, example run)</span>
+        </figcaption>
+      </figure>
+    </div>
+    <ul class="tight">
+      <li>
+        <span class="zh">两种摆法都合法：全在 10×8 内、互不重叠、边可以贴边。</span>
+        <span class="en">Both packings are legal: inside 10×8, no overlap, edges may touch.</span>
+      </li>
+      <li>
+        <span class="zh">两种摆法的死区都是 57、密度都是 28.75% —— 面积没变，总量就不可能变。</span>
+        <span class="en">Both have deadspace 57 and density 28.75% — the areas did not change, so the totals cannot.</span>
+      </li>
+      <li>
+        <span class="zh">变的是<em>空格的形状</em>：硬布局在 C 和 E 上方有一块 5 格的空兜；软布局变成第 6 列一条 2 格的缝，加 D 旁边 3 格的条。</span>
+        <span class="en">What changed is the <em>shape</em> of the empty cells: a 5-cell pocket above C and E becomes a 2-cell gap at column 6 plus a 3-cell strip beside D.</span>
+      </li>
+    </ul>
+    <p>
+      <span class="zh">为什么要用这么小的算例？因为只有小到能用手指头数格子，你才能亲手验证每一句断言 —— 外框 80、面积 23、死区 57、密度 28.75%，这些数都能自己复算。真实芯片上是几百个模块、由搜索算法决定每个软模块的形状，于是你只能相信工具给的数。先把循环在能核对的地方跑通，再去信工具，是更稳的顺序。</span>
+      <span class="en">Why keep the instance this tiny? Because only at a size you can count by hand can you verify every claim yourself: 80 cells, 23 of area, 57 of deadspace, 28.75% density. On a real chip there are hundreds of blocks and a search algorithm decides each soft shape, so you end up trusting the tool's numbers. Running the loop once where you can check it is the safer order.</span>
+    </p>
+  </section>
+
+  <section id="worked">
+    <h2><span class="zh">跟做一遍：一张表看完整个过程</span><span class="en">Follow along: the whole lesson in one table</span></h2>
+    <p>
+      <span class="zh">每一行都是同样的五个模块（面积 6+6+4+3+4 = 23）在同一个 10×8 外框里。坐标写的是左下角（x, y）。每个数你都可以数格子核对。</span>
+      <span class="en">Every row uses the same five modules (areas 6 + 6 + 4 + 3 + 4 = 23) in the same 10×8 outline. Coordinates are lower-left corners. Count cells to verify any number.</span>
+    </p>
+    <div class="tablewrap">
+    <table>
+      <thead><tr>
+        <th><span class="zh">步骤</span><span class="en">Step</span></th>
+        <th><span class="zh">A 的形状</span><span class="en">A's shape</span></th>
+        <th><span class="zh">坐标（左下角）</span><span class="en">Positions (lower-left)</span></th>
+        <th><span class="zh">合法？</span><span class="en">Legal?</span></th>
+        <th><span class="zh">死区 / 密度</span><span class="en">Deadspace / density</span></th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="zh">1 · 硬布局基准</span><span class="en">1 · hard baseline</span></td>
+          <td class="mono">3×2</td>
+          <td class="mono">A(0,0) B(3,0) C(5,0) D(0,2) E(7,0)</td>
+          <td class="good mono">true</td>
+          <td class="mono">57 / 28.75%</td>
+        </tr>
+        <tr>
+          <td><span class="zh">2 · 偷懒的变形</span><span class="en">2 · lazy reshape</span></td>
+          <td class="mono">2×3</td>
+          <td class="mono">A(0,0) B(3,0) C(5,0) D(0,2) E(7,0)</td>
+          <td class="bad mono">false — A overlaps D</td>
+          <td class="mono">57 / 28.75%</td>
+        </tr>
+        <tr>
+          <td><span class="zh">3 · 软布局标准答案</span><span class="en">3 · soft golden</span></td>
+          <td class="mono">2×3</td>
+          <td class="mono">A(0,0) B(2,0) C(4,0) D(4,2) E(7,0)</td>
+          <td class="good mono">true</td>
+          <td class="mono">57 / 28.75%</td>
+        </tr>
+        <tr>
+          <td><span class="zh">4 · 越界样例</span><span class="en">4 · overflow example</span></td>
+          <td class="mono">3×2</td>
+          <td class="mono">E(9,0): x+w = 11 &gt; 10</td>
+          <td class="bad mono">false — E outside outline</td>
+          <td class="mono">57 / 28.75%</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <p>
+      <span class="zh">第 2 行是这课的核心：变形把一个没动过的邻居弄成非法了。第 4 行是另一种失败 —— 撞外框边界，判定条件是 x ≥ 0、y ≥ 0、x+w ≤ 10、y+h ≤ 8。</span>
+      <span class="en">Row 2 is the heart of the lesson: a reshape invalidated a neighbor that never moved. Row 4 is the other failure — the boundary, checked as x ≥ 0, y ≥ 0, x+w ≤ 10, y+h ≤ 8.</span>
+    </p>
+  </section>
+
+  <section id="lab">
+    <h2><span class="zh">动手实验</span><span class="en">Hands-on lab</span></h2>
+    <p>
+      <span class="zh">先点一个模块芯片选中它，再点网格里的一格，模块就以左下角落在那里。点已摆好的模块可以重新选中，也可以用方向键一格一格挪 —— 不需要拖拽。指标面板每摆一步都实时重算。非法操作不会拦住你 —— 故意点错、然后读 reason 说清错在哪，这才是练习。</span>
+      <span class="en">Select a module chip, then click a grid cell to place it by its lower-left corner. Click a placed module to re-select it, or nudge with the arrows — no dragging needed. Metrics are recomputed on every placement. Illegal moves are never blocked: make a mistake and read the reason.</span>
+    </p>
+    <p>
+      <span class="zh">把宽高比滑块从 0.5 拉到 2 来回走，你会发现 A 只在 2×3 和 3×2 之间跳，中间没有别的选择 —— 因为面积 6 的整数形状里，只有这两个落在 [0.5, 2] 内。滑块看起来"只有两格"，正是这课的结论。</span>
+      <span class="en">Drag the aspect slider between 0.5 and 2: A only flips between 2×3 and 3×2, with nothing in between — of the integer shapes with area 6, only those two stay inside [0.5, 2]. The slider feeling "stuck on two values" is the lesson itself.</span>
+    </p>
+    <div class="lab">
+      <div class="labgrid">
+        <div>
+          <svg id="fp" viewBox="0 0 560 470" role="application" aria-label="10 列 8 行的摆放网格"></svg>
+          <div class="btns" id="fpbtns" role="group" aria-label="摆放控制 / placement controls"></div>
+        </div>
+        <div>
+          <div class="readout">
+            <p class="metrics" id="metrics"></p>
+          </div>
+          <div id="msg" role="status"></div>
+          <div class="btns">
+            <button type="button" id="btn-check"><span class="zh">检查</span><span class="en">Check</span></button>
+            <button type="button" id="btn-hint"><span class="zh">提示</span><span class="en">Hint</span></button>
+            <button type="button" id="btn-undo"><span class="zh">撤销</span><span class="en">Undo</span></button>
+            <button type="button" id="btn-reset"><span class="zh">重置</span><span class="en">Reset</span></button>
+            <button type="button" id="btn-golden" aria-pressed="false"><span class="zh">对照标准答案（仅参考）</span><span class="en">Compare golden (study)</span></button>
+          </div>
+          <div class="hintbox" id="hint"></div>
+          <ol class="stages" id="stages"></ol>
+          <span class="badge" id="badge">
+            <span class="zh">✓ 独立完成主任务 —— 没看标准答案、没要三级提示</span>
+            <span class="en">✓ solved the main task independently — no golden, no answer hints</span>
+          </span>
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <h3><span class="zh">挑战 1 —— 把 D 钉死在原点</span><span class="en">Challenge 1 — pin D at the origin</span></h3>
+        <p>
+          <span class="zh">D 焊死在 (0,0)，不能动了。A 的两种形状都仍然能把五块全部合法放下 —— 你要找出怎么摆，并说出 A 因此失去了什么。</span>
+          <span class="en">D is welded to (0,0). Both A shapes can still place all five legally — find how, and say what changed for A.</span>
+        </p>
+        <div class="btns">
+          <button type="button" id="btn-c1" aria-pressed="false"><span class="zh">切换：D 钉在 (0,0)</span><span class="en">Toggle: D pinned at (0,0)</span></button>
+        </div>
+        <h3 style="margin-top:16px"><span class="zh">挑战 2 —— 只浪费一格</span><span class="en">Challenge 2 — waste only one cell</span></h3>
+        <p>
+          <span class="zh">把<em>外接矩形</em>（盖住所有已摆模块的最小矩形）压到 24 格以内 —— 比模块面积 23 只多浪费 1 格。A 用 3×2 或 2×3 都能做到；指标下面的 bbox 会实时报分。</span>
+          <span class="en">Shrink the <em>bounding box</em> (smallest rectangle covering all placed modules) to 24 cells or less — one wasted cell beyond the 23 of module area. The live bbox readout keeps score.</span>
+        </p>
+        <details>
+          <summary><span class="zh">挑战 2 的参考摆法（剧透）</span><span class="en">Reference packing for Challenge 2 (spoiler)</span></summary>
+          <p class="mono">A(0,0) 3×2 · D(3,0) · B(4,1) · C(0,2) · E(2,2) → bbox 6×4 = 24, free cell (3,1)</p>
+          <p>
+            <span class="zh">A 用 2×3 时：A(0,0) · B(2,0) · C(4,0) · E(4,2) · D(0,3)。穷举验证过：低于 24 不可能 —— 23 是质数，23 格的外接矩形只能是 1×23。</span>
+            <span class="en">With A as 2×3: A(0,0) · B(2,0) · C(4,0) · E(4,2) · D(0,3). An exhaustive search confirms nothing below 24 works: 23 is prime, so a 23-cell box would have to be 1×23.</span>
+          </p>
+        </details>
+      </div>
+    </div>
+    <p class="note">
+      <span class="zh">想用原始平台工具？<a href="https://universal-verification-methodology.github.io/learning/tools/soft-module-sizing/" rel="noopener" target="_blank">学习平台上的 soft-module-sizing</a> —— 这里的数字和它一致。</span>
+      <span class="en">Want the original tool? <a href="https://universal-verification-methodology.github.io/learning/tools/soft-module-sizing/" rel="noopener" target="_blank">soft-module-sizing on the learning platform</a> — same numbers.</span>
+    </p>
+  </section>
+
+  <section id="practice">
+    <h2><span class="zh">引导练习</span><span class="en">Guided practice</span></h2>
+    <details>
+      <summary><span class="zh">任务 1 —— 只有两种形状</span><span class="en">Task 1 — two shapes only</span></summary>
+      <p>
+        <span class="zh">面积是 6，在整数网格上把所有因子对列出来，分别算宽除以高。哪几对落在 [0.5, 2] 里？</span>
+        <span class="en">Area 6: list every factor pair and compute w/h. Which pairs stay inside [0.5, 2]?</span>
+      </p>
+      <p>
+        <span class="zh"><strong>答案：</strong>1×6 → 0.167（低于 0.5，非法），2×3 → 0.667（合法），3×2 → 1.5（合法），6×1 → 6.0（高于 2，非法）。合法的正好两种 —— 这就是为什么实验只给两个变形按钮。</span>
+        <span class="en"><strong>Answer:</strong> 1×6 → 0.167 (below 0.5, illegal), 2×3 → 0.667 (legal), 3×2 → 1.5 (legal), 6×1 → 6.0 (above 2, illegal). Exactly two survive — hence two reshape buttons.</span>
+      </p>
+    </details>
+    <details>
+      <summary><span class="zh">任务 2 —— 在纸上做一次偷懒的变形</span><span class="en">Task 2 — the lazy reshape, on paper</span></summary>
+      <p>
+        <span class="zh">先写下硬布局的坐标，然后把 A 原地改成 2×3，其他都不动。A 和 D 抢了哪些格子？检查器先报什么？</span>
+        <span class="en">Write down the hard golden, change A to 2×3 in place, move nothing else. Which cells do A and D both claim? What does the checker say first?</span>
+      </p>
+      <p>
+        <span class="zh"><strong>答案：</strong>A 占 x 0–2、y 0–3；D 占 x 0–3、y 2–3。交集 x 0–2、y 2–3 有正面积，所以报 "A overlaps D"。而面积检查（2×3 = 6）是通过的 —— 光有面积守恒，换不来合法。</span>
+        <span class="en"><strong>Answer:</strong> A covers x 0–2, y 0–3; D covers x 0–3, y 2–3. The intersection has positive area, so the report is "A overlaps D". The area check (2×3 = 6) passes — area preservation alone never makes a packing legal.</span>
+      </p>
+    </details>
+    <details>
+      <summary><span class="zh">任务 3 —— 数空格子</span><span class="en">Task 3 — count the empty cells</span></summary>
+      <p>
+        <span class="zh">对硬布局，按高度带数空格：y 0–2 两行、y 2–3 一行、y 3–8 五行。加起来是不是 57？</span>
+        <span class="en">For the hard golden, count empty cells by band: rows y 0–2, row y 2–3, rows y 3–8. Do they sum to 57?</span>
+      </p>
+      <p>
+        <span class="zh"><strong>答案：</strong>y 0–2 有 10×2 − 18 = 2 格空（第 9 列）；y 2–3 有 10 − 5 = 5 格空；y 3–8 是 50 格全空。合计 2 + 5 + 50 = 57。软布局同样三段：4 + 3 + 50 = 57 —— 那 5 格空兜拆成第 6 列 2 格的缝，加 D 旁边 3 格的条。</span>
+        <span class="en"><strong>Answer:</strong> y 0–2 has 10×2 − 18 = 2 free cells; y 2–3 has 10 − 5 = 5; y 3–8 has 50. Total 2 + 5 + 50 = 57. The soft pack: 4 + 3 + 50 = 57 — the 5-cell pocket split into a 2-cell gap plus a 3-cell strip.</span>
+      </p>
+    </details>
+    <details>
+      <summary><span class="zh">任务 4 —— 为什么 D 往右走，不往上走</span><span class="en">Task 4 — why D moves right, not up</span></summary>
+      <p>
+        <span class="zh">软布局里 D 落在 (4,2)，压在 C 上面。那 D 放到 (2,3)、也就是 B 上方，行不行？</span>
+        <span class="en">In the soft golden D lands at (4,2) on top of C. Would D at (2,3), above B, also work?</span>
+      </p>
+      <p>
+        <span class="zh"><strong>答案：</strong>D 在 (2,3) 是 3×1，占 x 2–5、y 3–4：在框内，也不碰任何模块（A 和 B 都在 y=3 处结束，贴边合法）。所以行。教学标准答案只是选了 (4,2)；任何合法摆法都算数。</span>
+        <span class="en"><strong>Answer:</strong> D at (2,3) is 3×1 covering x 2–5, y 3–4: inside, touching nothing (A and B end at y=3; edge contact is legal). So yes. The teaching golden just picks (4,2); any legal packing counts.</span>
+      </p>
+    </details>
+  </section>
+
+  <section id="pitfalls">
+    <h2><span class="zh">唯一的坑：合法不等于好</span><span class="en">The one trap: legal is not good</span></h2>
+    <p>
+      <span class="zh">布图规划里最容易白干的一件事，不是不会摆，而是摆完不知道拿什么判断。合法只是及格线 —— 下面这条才是这课要你带走的判断标准。</span>
+      <span class="en">The easiest way to waste work in floorplanning is not failing to place blocks; it is not knowing what to judge them by. Legality is only a pass line — this is the judgment the lesson wants you to keep.</span>
+    </p>
+    <div class="card">
+      <h3 class="bad"><span class="zh">把 legal: true 当成做完了</span><span class="en">Mistaking legal for good</span></h3>
+      <p>
+        <span class="zh"><strong>症状：</strong>legal 显示 true，你收工了，可外接矩形还是 10×8，模块散得到处都是。</span>
+        <span class="en"><strong>Symptom:</strong> legal shows true and you stop, but the bounding box is still 10×8 with modules scattered everywhere.</span>
+      </p>
+      <p>
+        <span class="zh"><strong>原因：</strong>合法只查两件事 —— 每个模块在框内、彼此不重叠。五块散着放全都满足，但它不是一个好布局：走线会长，变形带来的那点空隙全白费。</span>
+        <span class="en"><strong>Cause:</strong> legality checks exactly two things — inside the frame, no overlap. Scattered modules satisfy both, yet the floorplan is bad: wires get long and the reshape bought nothing.</span>
+      </p>
+      <p>
+        <span class="zh"><strong>修法：</strong>摆完把外接矩形和 legal 一起读。散放是 10×8 = 80，紧凑能到 6×4 = 24 —— 这就是挑战 2 要你压到 24 的原因。</span>
+        <span class="en"><strong>Fix:</strong> read the bounding box next to legal. Scattered is 10×8 = 80; tight reaches 6×4 = 24 — exactly what Challenge 2 asks for.</span>
+      </p>
+      <p>
+        <span class="zh">在实验里怎么看到它：每摆一步，指标面板最后一行会报 bbox。散着放的时候它是 10×8 = 80；只有当你把空隙挤到只剩一格，它才会变成 6×4 = 24。数字不会骗人，现象一眼可见。</span>
+        <span class="en">How to see it in the lab: the last metrics line reports the bbox on every placement. Scattered sits at 10×8 = 80; only when the gaps are squeezed down to a single cell does it read 6×4 = 24.</span>
+      </p>
+    </div>
+  </section>
+
+  <section id="quiz">
+    <h2><span class="zh">自测</span><span class="en">Check yourself</span></h2>
+    <p>
+      <span class="zh">八道题，点完立刻判分，每题都有解析。及格线：8 题对 6 题。</span>
+      <span class="en">Eight questions, instant grading, every answer explained. Passing score: 6 of 8.</span>
+    </p>
+    <div class="quiz" id="quiz"></div>
+  </section>
+
+  <section id="glossary">
+    <h2><span class="zh">术语表</span><span class="en">Glossary</span></h2>
+    <dl class="glossary">
+      <div><dt>outline 外框</dt><dd><span class="zh">固定的容器矩形；这里是 10×8 = 80 格。合法性永远相对它来判。</span><span class="en">The fixed container rectangle; 10×8 = 80 cells here. Legality is measured against it.</span></dd></div>
+      <div><dt>module 模块</dt><dd><span class="zh">要摆进去的一个矩形。硬模块 w×h 固定，软模块可以变形。</span><span class="en">One rectangle to place. Hard modules keep a fixed w×h; soft modules may reshape.</span></dd></div>
+      <div><dt>hard module 硬模块</dt><dd><span class="zh">形状定死、不能变形的模块（SRAM、模拟电路、第三方 IP）—— 厂家给的物理尺寸。</span><span class="en">A module whose shape is fixed — SRAM, analog circuits, third-party IP. The vendor sets the physical size.</span></dd></div>
+      <div><dt>soft module 软模块</dt><dd><span class="zh">有形状自由的模块：面积锁死（A 是 w·h = 6），宽高比有界（w/h ∈ [0.5, 2]）。</span><span class="en">A module with shape freedom: area locked (w·h = 6 for A), aspect bounded (w/h ∈ [0.5, 2]).</span></dd></div>
+      <div><dt>aspect 宽高比</dt><dd><span class="zh">宽除以高。它是自由的边界，不是摆放的位置属性。</span><span class="en">Width divided by height. A boundary of the freedom, not a placement property.</span></dd></div>
+      <div><dt>reshape 变形</dt><dd><span class="zh">在面积＋宽高比约束下为软模块挑一个新的 (w, h)。这是任务的一半。</span><span class="en">Choosing a new (w, h) under the area + aspect constraints. Half the job.</span></dd></div>
+      <div><dt>re-pack 重摆</dt><dd><span class="zh">变形之后重新摆硬模块。这是另一半 —— 决定布局合不合法的那一半。</span><span class="en">Re-placing the hard modules after a reshape. The other half — the one that decides legality.</span></dd></div>
+      <div><dt>place 放置</dt><dd><span class="zh">把模块的左下角放到某个格 (x, y)。</span><span class="en">Put a module's lower-left corner at a grid cell (x, y).</span></dd></div>
+      <div><dt>packing 布局</dt><dd><span class="zh">整个摆法：每个模块都有位置。在框内＋不重叠才算合法。</span><span class="en">The whole arrangement: every module placed. Legal if inside and non-overlapping.</span></dd></div>
+      <div><dt>legal 合法</dt><dd><span class="zh">每个模块都在外框内（x≥0, y≥0, x+w≤10, y+h≤8）且没有正面积重叠。贴边合法。</span><span class="en">Every module inside (x≥0, y≥0, x+w≤10, y+h≤8) and no positive-area overlap. Edge contact is allowed.</span></dd></div>
+      <div><dt>overlap 重叠</dt><dd><span class="zh">两块模块共享正面积的格子。只是边碰边（面积为零）不算重叠。</span><span class="en">Two modules sharing cells with positive area. Touching edges does not count.</span></dd></div>
+      <div><dt>deadspace 死区</dt><dd><span class="zh">外框面积减模块面积：80 − 23 = 57。变形挪得动它，但消不掉它。</span><span class="en">Outline area minus module area: 80 − 23 = 57. A reshape moves it, never shrinks it.</span></dd></div>
+      <div><dt>density 密度</dt><dd><span class="zh">模块面积 ÷ 外框面积 = 23/80 = 0.2875（28.75%）。在这个算例里与形状无关。</span><span class="en">Module area ÷ outline area = 23/80 = 0.2875 (28.75%). Shape-invariant here.</span></dd></div>
+      <div><dt>bounding box 外接矩形</dt><dd><span class="zh">盖住所有已摆模块的最小矩形。标准答案是 9×3；挑战目标是 24 格。</span><span class="en">Smallest rectangle covering all placed modules. The golden is 9×3; the challenge target is 24 cells.</span></dd></div>
+      <div><dt>golden 标准答案</dt><dd><span class="zh">一组已知可行的摆法，用作对照 —— 从来不是唯一合法的答案。</span><span class="en">One known-good packing kept as a reference — never the only legal answer.</span></dd></div>
+    </dl>
+  </section>
+
+  <section id="downloads">
+    <h2><span class="zh">下载与幻灯片</span><span class="en">Downloads &amp; slides</span></h2>
+    <p>
+      <span class="zh">这一页是完全静态的，离线也能开：</span>
+      <span class="en">Everything here is static and works offline:</span>
+    </p>
+    <ul class="tight">
+      <li><a href="video.mp4">video.mp4</a> — <span class="zh">干净成片（没有烧录字幕）</span><span class="en">clean video, no burned subtitles</span> · <a href="poster.png">poster.png</a></li>
+      <li><a href="subs-en.vtt">EN VTT</a> · <a href="subs-zh.vtt">中文 VTT</a> · <a href="subs-en.srt">EN SRT</a> · <a href="subs-zh.srt">中文 SRT</a></li>
+      <li><a href="slides.pdf">slides.pdf</a> — <span class="zh">全部 12 页</span><span class="en">all 12 slides</span> · <a href="transcript.md">transcript.md</a></li>
+      <li><a href="quiz.json">quiz.json</a> — <span class="zh">八道题带解析</span><span class="en">eight questions with explanations</span></li>
+    </ul>
+    <div class="gallery" id="gallery"></div>
+  </section>
+
+  <section id="next">
+    <h2><span class="zh">下一课</span><span class="en">Next lesson</span></h2>
+    <p>
+      <span class="zh"><strong>宏模块摆放。</strong>D 不再普通，而是永久钉在原点 —— 挑战 1 里试过的约束变成下一课的规则，工具的任务是围着这块搬不动的方块把其他模块塞进去。平台实验在<a href="https://universal-verification-methodology.github.io/learning/" rel="noopener" target="_blank">课程平台</a>。</span>
+      <span class="en"><strong>Macro placement.</strong> D stops being an ordinary module and gets pinned at the origin for good — the constraint from Challenge 1 becomes the rule, and the packer fits everything else around the immovable block. The platform lab is <a href="https://universal-verification-methodology.github.io/learning/" rel="noopener" target="_blank">on the course platform</a>.</span>
+    </p>
+    <p>
+      <span class="zh">想深挖的话：工具源码在课程仓库的 <span class="mono">platform/tools/soft-module-sizing</span>，迷你算例是 <span class="mono">tiny_modules.json</span> —— 这一页每个数都能从这两个文件推出来。</span>
+      <span class="en">For the curious: the tool source lives in <span class="mono">platform/tools/soft-module-sizing</span> of the course repo, with the instance in <span class="mono">tiny_modules.json</span> — every number here can be re-derived from them.</span>
+    </p>
+  </section>
+
+  <details id="transcript">
+    <summary><span class="zh">完整口播稿（逐页）</span><span class="en">Full narration, slide by slide</span></summary>
+    <h3>Slide 1 — One module, two shapes</h3>
+<p>This is lab eight of floorplanning for EDA: soft module aspect sizing.</p>
+<p>Some blocks keep a fixed width and height; others may change shape as long as their area stays the same.</p>
+<p>Today one module gets reshaped, and the whole packing around it has to answer.</p>
+<p>By the end you will reshape it yourself and judge the result with four numbers.</p>
+<h3>Slide 2 — Where this is used</h3>
+<p>Before any numbers, here is where this shows up on a real chip.</p>
+<p>Memory blocks and analog circuits are hard: the vendor fixes their shape, so nobody reshapes them.</p>
+<p>Ordinary logic is soft: its gate count fixes the area, and its standard cell rows let the shape change.</p>
+<p>Production floorplanners reshape those soft blocks to close the gaps before routing starts.</p>
+<p>A few percent of die area is money on every wafer, and shorter wires mean better timing and less power.</p>
+<p>The real problem has hundreds of blocks, so a search algorithm replaces your hand.</p>
+<p>This lesson keeps that same loop and shrinks it to numbers you can check.</p>
+<h3>Slide 3 — The situation: 23 into 80</h3>
+<p>Start with the situation.</p>
+<p>The outline is a fixed rectangle, ten by eight, so its area is eighty.</p>
+<p>Five modules must live inside it, and their areas add up to twenty three.</p>
+<p>Four of them are hard modules: width and height never change.</p>
+<p>Module A is the soft one: area locked at six, width over height free to move between one half and two.</p>
+<h3>Slide 4 — The method: reshape, then re-pack</h3>
+<p>The method is a short loop, and the order matters.</p>
+<p>First choose a shape for A: a width and height whose product is still six, inside the aspect bounds.</p>
+<p>Second, place A into the outline.</p>
+<p>Third, re-pack the four hard modules around the new shape.</p>
+<p>Fourth, judge the result: legal or not, and what did the numbers do.</p>
+<p>Reshaping is only half the job; the re-pack decides whether the layout is legal.</p>
+<h3>Slide 5 — The instance: five modules, tiny numbers</h3>
+<p>Here is the whole instance, small enough to check by hand.</p>
+<p>The outline is ten columns wide and eight rows tall.</p>
+<p>A starts three wide and two tall, area six, aspect allowed between one half and two.</p>
+<p>B is two by three, C is two by two, D is three by one, and E is two by two.</p>
+<p>The areas are six, six, four, three, and four: twenty three in total.</p>
+<p>Every number today comes from this table, and you can re-derive each one.</p>
+<h3>Slide 6 — Baseline: hard A at 3×2</h3>
+<p>Baseline first: A keeps the hard shape, three by two, and the golden packing puts it at zero zero.</p>
+<p>B sits at three zero, C at five zero, D at zero two, and E at seven zero.</p>
+<p>Everything stays inside the ten by eight outline, nothing overlaps, so the packing is legal.</p>
+<p>Now the accounting: module areas sum to twenty three, and the outline area is eighty.</p>
+<p>Deadspace is eighty minus twenty three: fifty seven empty cells.</p>
+<p>Density is twenty three over eighty: zero point two eight seven five, about twenty nine percent.</p>
+<p>Keep those two numbers: they follow from the areas alone, not from any one shape.</p>
+<h3>Slide 7 — Naive reshape fails: A overlaps D</h3>
+<p>Now try the laziest possible reshape and watch it fail.</p>
+<p>Keep A at the same corner, zero zero, but stretch it to two wide and three tall.</p>
+<p>The area check passes: two times three is still six.</p>
+<p>But look at D: it sits at zero two, and A now fills that strip too.</p>
+<p>The checker says it plainly: A overlaps D, illegal.</p>
+<p>A reshape invalidates neighbors, so re-packing is not optional; it is the other half of reshape.</p>
+<h3>Slide 8 — Soft golden: same area, new whitespace</h3>
+<p>Here is the legal answer: A at zero zero as two by three, and the neighbors re-packed around it.</p>
+<p>B moves to two zero, C to four zero, D to four two, and E stays at seven zero.</p>
+<p>Run the checker again: everyone inside the outline, no overlaps, legal.</p>
+<p>Now the surprise: deadspace is still fifty seven, and density is still twenty eight point seven five percent.</p>
+<p>What changed is the shape of the empty cells: the hard pack has a five cell pocket above C and E.</p>
+<p>The soft pack splits it: a two cell gap at column six, plus a three cell strip beside D.</p>
+<p>Same area budget, different floor plan: that is what aspect freedom buys.</p>
+<h3>Slide 9 — Read the panel like a judge</h3>
+<p>The lab panel prints five lines, and each line answers a different question.</p>
+<p>Module area is twenty three: the five modules as currently shaped.</p>
+<p>Outline area is eighty and never changes; deadspace is outline area minus module area, here fifty seven.</p>
+<p>Density is module area over outline area: zero point two eight seven five.</p>
+<p>Legal is just true or false.</p>
+<p>The reason names the first violation it finds, like A overlaps D or E outside outline.</p>
+<p>When your numbers disagree with the panel, the reason line is where you look first.</p>
+<h3>Slide 10 — Aspect bounds: what softness can and cannot buy</h3>
+<p>The aspect bounds are the fence: for A, width over height must stay between one half and two.</p>
+<p>With area six, the integer shapes are one by six, two by three, three by two, and six by one.</p>
+<p>One by six has aspect one sixth; six by one has aspect six.</p>
+<p>Both leave the fence, so both are illegal shapes.</p>
+<p>Only two by three and three by two stay inside, which is why the reshape buttons offer exactly those two.</p>
+<p>And softness cannot lift the density: area over area, no shape of A beats twenty eight point seven five percent.</p>
+<p>Softness rearranges whitespace; it never creates area.</p>
+<h3>Slide 11 — The one trap: legal is not good</h3>
+<p>One trap is worth this whole page.</p>
+<p>Legal only means two things: every module inside the frame, and no overlap.</p>
+<p>Five modules scattered across the ten by eight still pass that check.</p>
+<p>But then the bounding box is the whole frame, and the reshape bought you nothing.</p>
+<p>So read the bounding box next to legal: legality is a gate, not a score.</p>
+<h3>Slide 12 — Your turn</h3>
+<p>Your turn, and the lab is right under this clip.</p>
+<p>Warm up: reshape A to two by three and watch the area stay six.</p>
+<p>Main task: place all five modules until legal says true — any legal packing counts, it does not have to match the golden.</p>
+<p>Then check the bounding box: scatter is legal, but it is not good.</p>
+<p>Challenge: pin D at the origin, then hunt the tightest packing, bounding box twenty four or less, one wasted cell.</p>
+<p>Then take the quiz, and next lesson we pin a macro at the origin for good.</p>
+  </details>
+
+  <footer>
+    <span class="zh">数字全部实测自 module03-03-soft-module-sizing：外框 10×8 = 80 · 面积和 23 · 死区 57 · 密度 28.75% · 硬布局 A(0,0) B(3,0) C(5,0) D(0,2) E(7,0) · 软布局 A(0,0,2×3) B(2,0) C(4,0) D(4,2) E(7,0)。</span>
+    <span class="en">Built from verified goldens of module03-03-soft-module-sizing: outline 10×8 = 80 · areas 23 · deadspace 57 · density 28.75% · hard A(0,0) B(3,0) C(5,0) D(0,2) E(7,0) · soft A(0,0,2×3) B(2,0) C(4,0) D(4,2) E(7,0).</span>
+  </footer>
+</main>
+
+<script>
+const QUIZ = {"module": "module03-03-soft-module-sizing", "title": {"zh": "软模块宽高比变形 —— 自测", "en": "Soft module aspect sizing — check yourself"}, "passing_score": 0.75, "items": [{"id": "q1", "type": "multiple_choice", "prompt": {"zh": "模块 A 被标记为软模块（soft），面积 6，宽高比界限 [0.5, 2]。这允许你做什么？", "en": "Module A is soft with area 6 and aspect bounds [0.5, 2]. What does that license you to do?"}, "choices": [{"zh": "只要宽高比在界内，就可以改变 A 的面积", "en": "Change A's area as long as the aspect stays in bounds"}, {"zh": "只要 w·h 保持 6、且 w/h 保持在 [0.5, 2] 内，就可以改变 A 的宽和高", "en": "Change A's width and height as long as w·h stays 6 and w/h stays in [0.5, 2]"}, {"zh": "可以把 A 摆到任何地方，哪怕一部分伸出外框", "en": "Place A anywhere, even partly outside the outline"}, {"zh": "只要面积是 6，A 就可以和硬模块重叠", "en": "Let A overlap a hard module as long as the area is 6"}], "answer": 1, "explain": {"zh": "软模块 = 在两条硬约束下换形状：面积守恒（w·h = 6）＋ 宽高比在界内。它从不允许改面积、出外框或重叠 —— 合法性仍然把关，而 B–E 都是硬模块、形状不变。", "en": "Soft means shape freedom under two hard constraints: area preserved (w·h = 6) and aspect in bounds. It never licenses changing the area, leaving the outline, or overlapping — legality still gates acceptance, and B–E stay hard."}}, {"id": "q2", "type": "multiple_choice", "prompt": {"zh": "外框是 10×8，五个模块面积加起来 23。死区和密度分别是多少？", "en": "The outline is 10×8 and the five module areas sum to 23. What are the deadspace and the density?"}, "choices": [{"zh": "deadspace 57，density 28.75%", "en": "deadspace 57, density 28.75%"}, {"zh": "deadspace 57，density 23%", "en": "deadspace 57, density 23%"}, {"zh": "deadspace 53，density 28.75%", "en": "deadspace 53, density 28.75%"}, {"zh": "deadspace 80，density 57%", "en": "deadspace 80, density 57%"}], "answer": 0, "explain": {"zh": "死区 = 80 − 23 = 57 格；密度 = 23/80 = 0.2875 = 28.75%。选 53 是把面积和算错了；选 23% 是把面积和当成了比值；80 和 57 是把两个量对调了。", "en": "deadspace = 80 − 23 = 57 empty cells; density = 23/80 = 0.2875 = 28.75%. 53 comes from a wrong area sum; 23% confuses the area sum with the ratio; 80 and 57 swap the two quantities."}}, {"id": "q3", "type": "multiple_choice", "prompt": {"zh": "A 的面积是 6，宽高比界限是 [0.5, 2]。用正整数宽高 (w×h) 来摆，有几种合法形状？", "en": "A has area 6 and aspect bounds [0.5, 2]. How many integer shapes (w×h) stay legal?"}, "choices": [{"zh": "1 种", "en": "1"}, {"zh": "2 种", "en": "2"}, {"zh": "3 种", "en": "3"}, {"zh": "4 种", "en": "4"}], "answer": 1, "explain": {"zh": "6 的因子对：1×6（宽高比 0.167，低于 0.5）、2×3（0.667，合法）、3×2（1.5，合法）、6×1（6.0，高于 2）。正好两种 —— 这就是为什么实验只给 3×2 和 2×3 两个变形按钮。", "en": "The factor pairs of 6 are 1×6 (aspect 0.167, under 0.5), 2×3 (0.667, legal), 3×2 (1.5, legal), 6×1 (6.0, over 2). Exactly two — hence two reshape buttons."}}, {"id": "q4", "type": "multiple_choice", "prompt": {"zh": "一个布局里模块互不重叠，每个模块都在外框内 —— 只有 E 例外：它在 x=9、宽 2，所以结束于 x=11，而外框只到 10。这个布局合法吗？", "en": "A packing has no overlaps and every module is inside except E: at x=9 with width 2 it ends at x=11 while the outline ends at 10. Is it legal?"}, "choices": [{"zh": "合法 —— 只要不重叠就够了", "en": "Yes — no overlap is enough"}, {"zh": "合法 —— 只有一列伸出去", "en": "Yes — only one column sticks out"}, {"zh": "不合法 —— 合法要求每个模块都在外框内，且互不重叠，两条都要满足", "en": "No — legality requires every module inside the outline AND no overlaps"}, {"zh": "要看 A 是什么形状", "en": "It depends on A's shape"}], "answer": 2, "explain": {"zh": "合法性是两段检查：每个模块都 insideOutline（x ≥ 0、y ≥ 0、x+w ≤ 10、y+h ≤ 8），以及没有正面积重叠。E 违反第一条（9+2 = 11 > 10），所以检查器报 \"E outside outline\"，跟重不重叠无关。贴边允许，伸出去不允许。", "en": "Legality is a two-part check: insideOutline for every module (x ≥ 0, y ≥ 0, x+w ≤ 10, y+h ≤ 8) and no positive-area overlap. E fails the first (9+2 = 11 > 10), so the checker reports \"E outside outline\". Edge-touching is allowed; sticking out is not."}}, {"id": "q5", "type": "multiple_choice", "prompt": {"zh": "A 从 3×2 合法地变形到 2×3，所有模块都重摆好了。现在的死区是多少？", "en": "A is legally reshaped from 3×2 to 2×3 and everything is re-packed. What is the deadspace now?"}, "choices": [{"zh": "还是 57 —— 变形只是把空格挪了位置，消不掉它们", "en": "Still 57 — reshaping moves empty cells, it never removes them"}, {"zh": "变小了，因为 A 变高了", "en": "Smaller, because A is taller now"}, {"zh": "变大了，因为 A 占了不同的格子", "en": "Larger, because A covers different cells"}, {"zh": "55，因为第 6 列多出了 2 格", "en": "55, because 2 cells are freed at column 6"}], "answer": 0, "explain": {"zh": "死区 = 外框面积 − 模块面积和 = 80 − 23 = 57，任何合法变形都如此，因为面积没变。变的是空区的形状：硬布局是 C 和 E 上方 5 格的空兜；软布局是第 6 列 2 格的缝，加 D 旁边 3 格的条。选 55 是漏掉了两种布局共有的顶部大片空区。", "en": "deadspace = outlineArea − moduleAreaSum = 80 − 23 = 57 for any legal reshape, because the areas did not change. What changes is the shape of the whitespace. 55 miscounts by forgetting the top band both packs share."}}, {"id": "q6", "type": "multiple_choice", "prompt": {"zh": "外接矩形（bounding box）是盖住所有已摆模块的最小矩形。硬布局和软布局的外接矩形分别是多少？", "en": "The bounding box is the smallest rectangle covering all placed modules. What are the hard and soft goldens' boxes?"}, "choices": [{"zh": "硬 9×3，软 9×3", "en": "hard 9×3, soft 9×3"}, {"zh": "硬 9×3，软 7×3", "en": "hard 9×3, soft 7×3"}, {"zh": "硬 10×8，软 9×3", "en": "hard 10×8, soft 9×3"}, {"zh": "硬 9×2，软 9×3", "en": "hard 9×2, soft 9×3"}], "answer": 0, "explain": {"zh": "两种布局都伸到 x = 9（E 结束于 7+2），也都在 y = 3 封顶（硬布局是 B，软布局是 A 和 B），所以外接矩形都是 9×3 = 27 格。又一次说明：总量不动，变的只是里面的排布。10×8 是容器，不是外接矩形。", "en": "Both packs reach x = 9 (E ends at 7+2) and top out at y = 3 (B in the hard pack; A and B in the soft pack), so both boxes are 9×3 = 27. Another echo: the totals do not move, only the arrangement."}}, {"id": "q7", "type": "multiple_choice", "prompt": {"zh": "你把 A 改成 2×3，但 B、C、D、E 还留在硬布局的坐标上（B(3,0)、C(5,0)、D(0,2)、E(7,0)）。检查器报什么？", "en": "You reshape A to 2×3 but leave B, C, D, E at the hard-golden coordinates. What does the checker report?"}, "choices": [{"zh": "合法 —— 面积又没变", "en": "legal — the area did not change"}, {"zh": "A overlaps D", "en": "A overlaps D"}, {"zh": "E outside outline", "en": "E outside outline"}, {"zh": "A outside outline", "en": "A outside outline"}], "answer": 1, "explain": {"zh": "A 在 (0,0)、2×3，占 x 0–2、y 0–3。D 在 (0,2)、3×1，占 x 0–3、y 2–3。两者共享正面积的格子，所以检查器找到的第一个违规是 \"A overlaps D\"。这就是为什么每次变形都拖着一次重摆。", "en": "A at (0,0) as 2×3 covers x 0–2, y 0–3. D at (0,2) as 3×1 covers x 0–3, y 2–3. They share cells with positive area, so the first violation found is \"A overlaps D\"."}}, {"id": "q8", "type": "multiple_choice", "prompt": {"zh": "挑战回顾：五块都合法地摆进 10×8 之后，外接矩形最小能压到多少（浪费几格）？", "en": "Challenge recap: with all five placed legally inside 10×8, how small can the bounding box get?"}, "choices": [{"zh": "23 —— 一格不浪费", "en": "23 — zero waste"}, {"zh": "24 —— 正好浪费 1 格", "en": "24 — exactly one wasted cell"}, {"zh": "27 —— 就是标准答案那个 9×3", "en": "27 — the golden's 9×3"}, {"zh": "30 —— 浪费 3 格", "en": "30 — three wasted cells"}], "answer": 1, "explain": {"zh": "外接矩形面积至少是 23（模块面积和），而 23 是质数 —— 想零浪费就得是 1×23 的矩形，对这些形状不可能。24 = 6×4 可行：A(0,0) D(3,0) B(4,1) C(0,2) E(2,2)，只空出 (3,1) 一格（穷举验证；4×6 和 8×3 也能到 24）。27 是标准答案的外接矩形 —— 合法，但不是最紧。", "en": "The box must be at least 23 and 23 is prime, so zero waste would need a 1×23 box — impossible. 24 = 6×4 works: A(0,0) D(3,0) B(4,1) C(0,2) E(2,2), one free cell (verified by exhaustive search). 27 is the golden's box — legal, not tight."}}]};
+const isEN = () => document.body.classList.contains("lang-en");
+const L = (zh, en) => (isEN() ? en : zh);
+
+/* ---------- language toggle ---------- */
+(function () {
+  const zh = document.getElementById("btn-zh");
+  const en = document.getElementById("btn-en");
+  function apply(lang) {
+    const isEn = lang === "en";
+    document.body.classList.toggle("lang-en", isEn);
+    document.body.classList.toggle("lang-zh", !isEn);
+    document.documentElement.lang = isEn ? "en" : "zh-CN";
+    if (zh && en) {
+      zh.setAttribute("aria-pressed", String(!isEn));
+      en.setAttribute("aria-pressed", String(isEn));
+    }
+    try { localStorage.setItem("lab08-lang", lang); } catch (e) {}
+    if (typeof window.__renderQuiz === "function") window.__renderQuiz();
+    if (typeof window.__rerenderLab === "function") window.__rerenderLab();
+    if (typeof window.__renderChapters === "function") window.__renderChapters();
+  }
+  if (zh) zh.addEventListener("click", () => apply("zh"));
+  if (en) en.addEventListener("click", () => apply("en"));
+  let saved = "zh";
+  try { saved = localStorage.getItem("lab08-lang") || "zh"; } catch (e) {}
+  apply(saved);
+  window.__setLang = apply;
+})();
+const CHAPTERS = [{"t": 0.0, "zh": "01 · 一块模块，两种形状", "en": "01 · One module, two shapes"}, {"t": 23.3, "zh": "02 · 用在哪", "en": "02 · Where this is used"}, {"t": 66.2, "zh": "03 · 处境：23 塞进 80", "en": "03 · The situation: 23 into 80"}, {"t": 91.5, "zh": "04 · 方法：变形再重摆", "en": "04 · The method: reshape, then re-pack"}, {"t": 120.6, "zh": "05 · 算例：五个模块", "en": "05 · The instance: five modules, tiny numbers"}, {"t": 153.3, "zh": "06 · 硬布局基准", "en": "06 · Baseline: hard A at 3×2"}, {"t": 197.9, "zh": "07 · 偷懒的变形", "en": "07 · Naive reshape fails: A overlaps D"}, {"t": 229.2, "zh": "08 · 软布局答案", "en": "08 · Soft golden: same area, new whitespace"}, {"t": 275.4, "zh": "09 · 像裁判一样读面板", "en": "09 · Read the panel like a judge"}, {"t": 315.4, "zh": "10 · 宽高比的栅栏", "en": "10 · Aspect bounds: what softness can and cannot buy"}, {"t": 359.2, "zh": "11 · 唯一的坑：合法≠好", "en": "11 · The one trap: legal is not good"}, {"t": 383.9, "zh": "12 · 轮到你", "en": "12 · Your turn"}];
+
+/* ---------- soft subtitle fallback (some hosts serve .vtt with wrong MIME) ---------- */
+(function () {
+  const video = document.querySelector("video");
+  if (!video) return;
+  video.addEventListener("loadedmetadata", () => setTimeout(() => {
+    const def = video.querySelector('track[default]');
+    if (def && def.track && def.track.cues && def.track.cues.length) return;
+    video.querySelectorAll("track").forEach((t) => {
+      fetch(t.getAttribute("src"))
+        .then((r) => (r.ok ? r.text() : Promise.reject(new Error("fetch"))))
+        .then((txt) => {
+          const nt = document.createElement("track");
+          nt.kind = t.kind; nt.label = t.label; nt.srclang = t.srclang;
+          nt.default = t.default;
+          nt.src = URL.createObjectURL(new Blob([txt], { type: "text/vtt" }));
+          t.replaceWith(nt);
+        })
+        .catch(() => {});
+    });
+  }, 900));
+})();
+
+/* ---------- mini floorplans (hard vs soft golden) ---------- */
+const COL = {A:"#2dd4bf", B:"#60a5fa", C:"#f59e0b", D:"#fb7185", E:"#a78bfa"};
+const GOLDEN = {A:[0,0,3,2], B:[3,0,2,3], C:[5,0,2,2], D:[0,2,3,1], E:[7,0,2,2]};
+const SOFTG  = {A:[0,0,2,3], B:[2,0,2,3], C:[4,0,2,2], D:[4,2,3,1], E:[7,0,2,2]};
+const SVGNS = "http://www.w3.org/2000/svg";
+function mini(id, pack) {
+  const svg = document.getElementById(id);
+  if (!svg) return;
+  const cs = 20, ox = 18, oy = 8;
+  function el(n, at) { const e = document.createElementNS(SVGNS, n); for (const k in at) e.setAttribute(k, at[k]); return e; }
+  svg.append(el("rect", {x:ox, y:oy, width:200, height:160, fill:"none", stroke:"#243352", "stroke-width":1.5}));
+  for (let i = 1; i < 10; i++) svg.append(el("line", {x1:ox+i*cs, y1:oy, x2:ox+i*cs, y2:oy+160, stroke:"#1a2440", "stroke-width":0.7}));
+  for (let j = 1; j < 8; j++) svg.append(el("line", {x1:ox, y1:oy+j*cs, x2:ox+200, y2:oy+j*cs, stroke:"#1a2440", "stroke-width":0.7}));
+  for (const m of "ABCDE") {
+    const [x, y, w, h] = pack[m];
+    const r = el("rect", {x:ox+x*cs+1, y:oy+(8-y-h)*cs+1, width:w*cs-2, height:h*cs-2, fill:COL[m], "fill-opacity":0.85, stroke:"#0b1220"});
+    svg.append(r);
+    const t = el("text", {x:ox+(x+w/2)*cs, y:oy+(8-y-h/2)*cs+4, "text-anchor":"middle", "font-size":11, "font-weight":700, fill:"#0b1220"});
+    t.textContent = m; svg.append(t);
+  }
+  for (let i = 0; i <= 10; i += 2) {
+    const t = el("text", {x:ox+i*cs, y:oy+174, "text-anchor":"middle", "font-size":8, fill:"#64748b"});
+    t.textContent = i; svg.append(t);
+  }
+  for (let j = 0; j <= 8; j += 2) {
+    const t = el("text", {x:ox-6, y:oy+(8-j)*cs+3, "text-anchor":"end", "font-size":8, fill:"#64748b"});
+    t.textContent = j; svg.append(t);
+  }
+}
+mini("mini-hard", GOLDEN);
+mini("mini-soft", SOFTG);
+
+/* ---------- slides gallery ---------- */
+(function () {
+  const gal = document.getElementById("gallery");
+  const names = [
+    ["一块模块，两种形状", "One module, two shapes"],
+    ["用在哪", "Where this is used"],
+    ["处境：23 塞进 80", "The situation: 23 into 80"],
+    ["方法：变形再重摆", "The method: reshape, then re-pack"],
+    ["算例：五个模块", "The instance: five modules"],
+    ["硬布局基准", "Baseline: hard A at 3x2"],
+    ["偷懒的变形", "The lazy reshape"],
+    ["软布局答案", "Soft golden"],
+    ["像裁判一样读面板", "Read the panel"],
+    ["宽高比的栅栏", "Aspect bounds"],
+    ["唯一的坑：合法不等于好", "The one trap: legal is not good"],
+    ["轮到你", "Your turn"],
+  ];
+  names.forEach((n, i) => {
+    const a = document.createElement("a");
+    a.href = `slides/${String(i + 1).padStart(2, "0")}.png`;
+    const img = document.createElement("img");
+    img.src = a.href; img.alt = `Slide ${i + 1}: ${isEN() ? n[1] : n[0]}`; img.loading = "lazy";
+    a.append(img); gal.append(a);
+  });
+})();
+
+/* ---------- video chapters ---------- */
+(function () {
+  const video = document.querySelector("video");
+  const ol = document.getElementById("chapters");
+  const fmt = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+  function renderChapters() {
+    ol.replaceChildren();
+    CHAPTERS.forEach((c) => {
+      const li = document.createElement("li");
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = `${fmt(c.t)} · ${isEN() ? c.en : c.zh}`;
+      b.addEventListener("click", () => { video.currentTime = c.t; video.play(); });
+      li.append(b); ol.append(li);
+    });
+  }
+  renderChapters();
+  window.__renderChapters = renderChapters;
+})();
+
+/* ---------- quiz (bilingual: re-rendered on language switch) ---------- */
+const pick = (v) => (typeof v === "string" ? v : (isEN() ? v.en : v.zh));
+const QUIZ_ANSWERS = {};   // qi -> chosen index; survives a language switch
+
+function revealAnswer(item, opts, expl, chosen) {
+  const isRight = item.type === "true_false" ? (chosen === 0) === item.answer : chosen === item.answer;
+  [...opts.children].forEach((c) => (c.disabled = true));
+  opts.children[chosen].classList.add(isRight ? "correct" : "wrong");
+  if (!isRight) {
+    const rightIndex = item.type === "true_false" ? (item.answer ? 0 : 1) : item.answer;
+    opts.children[rightIndex].classList.add("correct");
+  }
+  expl.classList.add("show");
+}
+
+function renderQuiz() {
+  const quizRoot = document.getElementById("quiz");
+  quizRoot.replaceChildren();
+  QUIZ.items.forEach((item, qi) => {
+    const box = document.createElement("div");
+    box.className = "q";
+    const p = document.createElement("p");
+    p.className = "prompt";
+    p.textContent = (qi + 1) + ". " + pick(item.prompt);
+    box.append(p);
+    const opts = document.createElement("div");
+    opts.className = "opts";
+    const choices = item.type === "true_false" ? ["True", "False"] : item.choices;
+    choices.forEach((choice, ci) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "opt"; b.textContent = pick(choice);
+      b.addEventListener("click", () => {
+        if (QUIZ_ANSWERS[qi] !== undefined) return;   // already answered
+        QUIZ_ANSWERS[qi] = ci;
+        revealAnswer(item, opts, expl, ci);
+      });
+      opts.append(b);
+    });
+    const expl = document.createElement("p");
+    expl.className = "explain";
+    expl.textContent = pick(item.explain || "");
+    box.append(opts, expl);
+    if (QUIZ_ANSWERS[qi] !== undefined) revealAnswer(item, opts, expl, QUIZ_ANSWERS[qi]);
+    quizRoot.append(box);
+  });
+}
+renderQuiz();
+window.__renderQuiz = renderQuiz;
+
+/* ================= interactive lab (L2 + L3, all numbers computed live) ================= */
+(function () {
+  const OW = 10, OH = 8, CELL = 48, GX = 34, GY = 12;
+  const OUTLINE_AREA = OW * OH;             // 80
+  const BASE = {A:[3,2], B:[2,3], C:[2,2], D:[3,1], E:[2,2]};
+  const ASPECT = {min:0.5, max:2.0};
+  const SOFT_GOLDEN = {A:[0,0,2,3], B:[2,0,2,3], C:[4,0,2,2], D:[4,2,3,1], E:[7,0,2,2]};
+
+  const svg = document.getElementById("fp");
+  const metricsEl = document.getElementById("metrics");
+  const msgEl = document.getElementById("msg");
+  const hintEl = document.getElementById("hint");
+  const stagesEl = document.getElementById("stages");
+  const badgeEl = document.getElementById("badge");
+
+  let mods, pack, selected, history, dPinned, goldenOn, revealedEver;
+  let stages, cur, hintLevel, usedL3;
+  const DENSITY = null; // computed
+
+  const MODS = () => mods;
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  function pushHistory() { history.push({mods: clone(mods), pack: clone(pack)}); if (history.length > 200) history.shift(); }
+
+  function area(m) { return m[0] * m[1]; }
+  function moduleAreaSum() { return Object.keys(mods).reduce((s, k) => s + area(mods[k]), 0); }
+  function inside(id) {
+    const r = pack[id]; if (!r) return true;
+    const [w, h] = mods[id];
+    return r.x >= 0 && r.y >= 0 && r.x + w <= OW && r.y + h <= OH;
+  }
+  function overlap(a, b) {
+    const [aw, ah] = mods[a], [bw, bh] = mods[b];
+    const A = pack[a], B = pack[b];
+    return !(A.x + aw <= B.x || B.x + bw <= A.x || A.y + ah <= B.y || B.y + bh <= A.y);
+  }
+  function legality() {
+    const ids = Object.keys(pack);
+    if (!ids.length) return {legal: null, reason: "empty"};
+    for (const id of ["A","B","C","D","E"]) {
+      if (pack[id] && !inside(id)) return {legal: false, reason: id + " outside outline"};
+    }
+    const order = ["A","B","C","D","E"].filter((i) => pack[i]);
+    for (let i = 0; i < order.length; i++)
+      for (let j = i + 1; j < order.length; j++)
+        if (overlap(order[i], order[j])) return {legal: false, reason: order[i] + " overlaps " + order[j]};
+    return {legal: true, reason: "ok"};
+  }
+  function bbox() {
+    const ids = Object.keys(pack);
+    if (!ids.length) return null;
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    for (const id of ids) {
+      const [w, h] = mods[id];
+      x0 = Math.min(x0, pack[id].x); y0 = Math.min(y0, pack[id].y);
+      x1 = Math.max(x1, pack[id].x + w); y1 = Math.max(y1, pack[id].y + h);
+    }
+    return {w: x1 - x0, h: y1 - y0, area: (x1 - x0) * (y1 - y0)};
+  }
+
+  /* stages: id, label, check, hints[3] */
+  function stagesDef() {
+    const placed = (ids) => ids.every((i) => pack[i]);
+    const pairLegal = (ids) => {
+      for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++)
+        if (pack[ids[i]] && pack[ids[j]] && overlap(ids[i], ids[j])) return false;
+      return true;
+    };
+    return [
+      {id: "W1", label: L("热身 1 · 把 A 变形成 2×3（面积仍是 6）", "Warm-up 1 · reshape A to 2×3 (area stays 6)"),
+       check: () => mods.A[0] === 2 && mods.A[1] === 3,
+       hints: [L("看网格上方的变形按钮 —— A → 2×3 只做一件事：宽和高对调。", "Look at the reshape buttons above the grid — A → 2×3 only swaps width and height."),
+               L("点 A → 2×3（或把宽高比滑块往左拉）。盯住 moduleArea 那一行：它前后都不能变。", "Press A → 2×3 (or drag the aspect slider left). Watch the moduleArea line: it must not move."),
+               L("点 A → 2×3 按钮。面积检查：2×3 = 6，还是 6。", "Press A → 2×3. Area check: 2×3 = 6 — still six.")]},
+      {id: "W2", label: L("热身 2 · 把 A 放进外框（放哪都行）", "Warm-up 2 · place A anywhere in the outline"),
+       check: () => !!pack.A && inside("A"),
+       hints: [L("先选中 A 芯片，再点任意空格 —— A 以左下角落在那格里。", "Select the A chip, then click any empty cell — A lands with its lower-left corner there."),
+               L("点芯片行的 A，再点左下角附近的一格。legal 可能会翻，读一下 reason。", "Click A on the chip row, then a cell near the bottom-left. legal may flip — read the reason."),
+               L("A 放 (0,0) 可以；任何满足 x+2 ≤ 10、y+3 ≤ 8 的格子也都可以。", "A at (0,0) works; so does any cell with x+2 ≤ 10 and y+3 ≤ 8.")]},
+      {id: "M1", label: L("主任务 1 · 放下 B、C、E（它们是硬模块，形状固定）", "Main 1 · place B, C and E (hard, fixed shapes)"),
+       check: () => placed(["B","C","E"]) && pairLegal(["B","C","E"]),
+       hints: [L("B 是 2×3，C 和 E 是 2×2。只要都在框内、彼此不压，放哪都行。", "B is 2×3, C and E are 2×2. Any cells that stay inside and off each other will do."),
+               L("依次点芯片再点格子，沿底排摆，例如 B(2,0) C(4,0) E(7,0)。", "Click each chip, then click cells along the bottom row, e.g. B(2,0) C(4,0) E(7,0)."),
+               L("一组合法摆法：B(2,0)、C(4,0)、E(7,0) —— 配合 A 在 (0,0) 的 2×3。", "One legal set: B(2,0), C(4,0), E(7,0) — with A at (0,0) as 2×3.")]},
+      {id: "M2", label: L("主任务 2 · 放下 D —— 它的老位置 (0,2) 已经被占了", "Main 2 · place D — its old home (0,2) is taken now"),
+       check: () => !!pack.D && pairLegal(["A","B","C","D","E"]),
+       hints: [L("D 是 3×1。A 的 2×3 在 (0,0) 占了第 0–1 列的 0–2 行，所以 D 不能留在 (0,2)。", "D is 3×1. A 2×3 at (0,0) fills rows 0–2 of columns 0–1, so D cannot stay at (0,2)."),
+               L("D 需要一个宽 3、高 1 的洞：在你摆好的东西旁边或上面。试试 (4,2)，压在 C 上面。", "D needs a 3-wide, 1-tall hole beside or above what you placed. Try (4,2), on top of C."),
+               L("教学标准答案：D(4,2)。另外 D(2,3)（B 上方）也合法。", "Teaching golden: D(4,2). Also legal: D(2,3) above B.")]},
+      {id: "M3", label: L("主任务 3 · 五块全放下且合法 —— 然后回答密度问题", "Main 3 · all five legal, then answer the density question"),
+       check: () => answerOK && Object.keys(pack).length === 5 && legality().legal,
+       hints: [L("先把 legal 弄成 true，密度问题就会出现在这里 —— 它只有一个正确答案。", "Get legal: true first; the density question then appears here — it has one correct answer."),
+               L("死区和密度只由面积决定。这次变形里，有任何面积变了吗？", "Deadspace and density come from areas only. Did any area change?"),
+               L("对照表里每一行的密度都是 23/80 = 28.75% —— 答案是“没变”。", "Every row of the worked table says 23/80 = 28.75% — the answer is: unchanged.")]}
+    ];
+  }
+
+  let answerOK = false;
+
+  function reset(everything) {
+    mods = clone(BASE); pack = {}; selected = "A";
+    history = []; dPinned = false; goldenOn = false; revealedEver = false;
+    answerOK = false; usedL3 = false; hintLevel = 0;
+    stages = stagesDef(); cur = 0;
+    badgeEl.classList.remove("show");
+    hintEl.textContent = "";
+    setGolden(false); syncC1(); render(); say(L("已重置。先选一个芯片，再点网格。从热身 1 开始。", "Workspace reset. Pick a chip, click the grid. Start with Warm-up 1."), "");
+  }
+
+  function say(text, cls) { msgEl.textContent = text; msgEl.className = cls || ""; }
+
+  /* ---------- rendering ---------- */
+  function el(n, at) { const e = document.createElementNS(SVGNS, n); for (const k in at) e.setAttribute(k, at[k]); return e; }
+
+  function render() {
+    svg.replaceChildren();
+    svg.append(el("rect", {x:GX, y:GY, width:OW*CELL, height:OH*CELL, fill:"#0e1626", stroke:"#243352", "stroke-width":1.5}));
+    for (let i = 1; i < OW; i++) svg.append(el("line", {x1:GX+i*CELL, y1:GY, x2:GX+i*CELL, y2:GY+OH*CELL, stroke:"#1a2440", "stroke-width":0.8}));
+    for (let j = 1; j < OH; j++) svg.append(el("line", {x1:GX, y1:GY+j*CELL, x2:GX+OW*CELL, y2:GY+j*CELL, stroke:"#1a2440", "stroke-width":0.8}));
+    for (let i = 0; i <= OW; i++) {
+      const t = el("text", {x:GX+i*CELL, y:GY+OH*CELL+18, "text-anchor":"middle", "font-size":11, fill:"#64748b", "font-family":"Consolas,monospace"});
+      t.textContent = i; svg.append(t);
+    }
+    for (let j = 0; j <= OH; j++) {
+      const t = el("text", {x:GX-8, y:GY+(OH-j)*CELL+4, "text-anchor":"end", "font-size":11, fill:"#64748b", "font-family":"Consolas,monospace"});
+      t.textContent = j; svg.append(t);
+    }
+    if (goldenOn) {
+      for (const m of "ABCDE") {
+        const [x, y, w, h] = SOFT_GOLDEN[m];
+        svg.append(el("rect", {x:GX+x*CELL+3, y:GY+(OH-y-h)*CELL+3, width:w*CELL-6, height:h*CELL-6,
+          fill:"none", stroke:"#f59e0b", "stroke-width":2, "stroke-dasharray":"6 5", opacity:0.9}));
+      }
+    }
+    for (const id of ["A","B","C","D","E"]) {
+      if (!pack[id]) continue;
+      const [w, h] = mods[id];
+      const r = pack[id];
+      const rect = el("rect", {x:GX+r.x*CELL+1, y:GY+(OH-r.y-h)*CELL+1, width:w*CELL-2, height:h*CELL-2,
+        fill:COL[id], "fill-opacity":0.85, stroke:id === selected ? "#ffffff" : "#0b1220", "stroke-width":id === selected ? 2.5 : 1});
+      rect.style.cursor = "pointer";
+      rect.addEventListener("click", (ev) => { ev.stopPropagation(); selected = id; render(); });
+      svg.append(rect);
+      const t = el("text", {x:GX+(r.x+w/2)*CELL, y:GY+(OH-r.y-h/2)*CELL+5, "text-anchor":"middle",
+        "font-size":16, "font-weight":700, fill:"#0b1220", "pointer-events":"none"});
+      t.textContent = id; svg.append(t);
+    }
+    const leg = legality();
+    const bb = bbox();
+    const dens = (moduleAreaSum() / OUTLINE_AREA).toFixed(4);
+    metricsEl.innerHTML =
+      `<span class="m-dim">moduleArea:</span> <b>${moduleAreaSum()}</b><br>` +
+      `<span class="m-dim">outlineArea:</span> <b>${OUTLINE_AREA}</b><br>` +
+      `<span class="m-dim">deadspace:</span> <b>${OUTLINE_AREA - moduleAreaSum()}</b><br>` +
+      `<span class="m-dim">density:</span> <b>${dens}</b> (${(moduleAreaSum() / OUTLINE_AREA * 100).toFixed(2)}%)<br>` +
+      `<span class="m-dim">legal:</span> <b class="${leg.legal === false ? "m-bad" : leg.legal ? "m-ok" : "m-dim"}">${leg.legal}</b>` +
+      ` <span class="m-dim">reason:</span> ${leg.reason}<br>` +
+      `<span class="m-dim">placed:</span> <b>${Object.keys(pack).length}/5</b>` +
+      (bb ? ` <span class="m-dim">· bbox:</span> <b>${bb.w}×${bb.h} = ${bb.area}</b>` : "") +
+      (dPinned ? ` <span class="m-dim">· D pinned (0,0)</span>` : "");
+    renderStages();
+    renderButtons();
+  }
+
+  function renderStages() {
+    stagesEl.replaceChildren();
+    stages.forEach((st, i) => {
+      const li = document.createElement("li");
+      const done = i < cur || (i === cur && st.check());
+      if (i === cur) li.className = "current"; else if (done) li.className = "done";
+      const tag = document.createElement("span"); tag.className = "tag";
+      tag.textContent = done ? "✓" : (i === cur ? "▶" : "·");
+      li.append(tag, document.createTextNode(st.label));
+      stagesEl.append(li);
+    });
+  }
+
+  /* ---------- buttons ---------- */
+  const btns = document.getElementById("fpbtns");
+  function renderButtons() {
+    btns.replaceChildren();
+    const mk = (label, fn, pressed) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = label;
+      if (pressed !== undefined) b.setAttribute("aria-pressed", String(pressed));
+      b.addEventListener("click", fn);
+      btns.append(b);
+      return b;
+    };
+    for (const id of ["A","B","C","D","E"]) {
+      const locked = dPinned && id === "D";
+      const [w, h] = mods[id];
+      mk(`${id} (${w}×${h})${locked ? " 🔒" : ""}`, () => {
+        if (locked) { say(L("这个挑战里 D 钉在 (0,0)，不能动。", "D is pinned at (0,0) in this challenge — it cannot move."), "bad"); return; }
+        selected = id; render();
+      }, selected === id);
+    }
+    const spacer = document.createElement("span"); spacer.style.flexBasis = "100%"; spacer.style.height = "4px";
+    btns.append(spacer);
+    mk("←", () => nudge(-1, 0)); mk("→", () => nudge(1, 0));
+    mk("↑", () => nudge(0, 1)); mk("↓", () => nudge(0, -1));
+    mk(L("移除", "Remove"), removeSel); mk(L("全部清空", "Clear all"), clearAll);
+    const sp2 = document.createElement("span"); sp2.style.flexBasis = "100%"; sp2.style.height = "4px";
+    btns.append(sp2);
+    mk("A → 3×2", () => reshape(3, 2));
+    mk("A → 2×3", () => reshape(2, 3));
+    const slider = document.createElement("input");
+    slider.type = "range"; slider.min = "0.5"; slider.max = "2"; slider.step = "0.05";
+    slider.value = String((mods.A[0] / mods.A[1]).toFixed(2));
+    slider.setAttribute("aria-label", L("A 的宽高比，0.5 到 2", "Aspect ratio for A, 0.5 to 2"));
+    slider.style.flex = "1"; slider.style.minWidth = "160px";
+    const lab = document.createElement("span");
+    lab.className = "mono"; lab.style.fontSize = "13px"; lab.style.alignSelf = "center";
+    lab.textContent = L("宽高比 ", "aspect ") + (+slider.value).toFixed(2) + " → A " + mods.A[0] + "×" + mods.A[1];
+    slider.addEventListener("input", () => {
+      const a = parseFloat(slider.value);
+      const [w, h] = shapeForAspect(a);
+      lab.textContent = L("宽高比 ", "aspect ") + a.toFixed(2) + " → A " + w + "×" + h;
+      if (w !== mods.A[0] || h !== mods.A[1]) reshape(w, h, true);
+    });
+    btns.append(slider, lab);
+  }
+
+  function shapeForAspect(a) {
+    const areaA = 6;
+    let w = Math.max(1, Math.round(Math.sqrt(areaA * a)));
+    let h = Math.max(1, Math.round(areaA / w));
+    while (w * h > areaA && w > 1) w -= 1;
+    while (w * h < areaA) h += 1;
+    return [w, h];
+  }
+
+  /* ---------- actions ---------- */
+  function reshape(w, h, fromSlider) {
+    if (w * h !== 6) { say(L("不合法：w·h 必须保持 6，否则你是换掉了 A，不是变形。", "Rejected: w·h must stay 6, or you replaced A instead of reshaping it."), "bad"); return; }
+    const aspect = w / h;
+    if (aspect < ASPECT.min || aspect > ASPECT.max) { say(L("不合法：宽高比 " + aspect.toFixed(3) + " 跑出了 [0.5, 2]。", "Rejected: aspect " + aspect.toFixed(3) + " leaves [0.5, 2]."), "bad"); return; }
+    pushHistory();
+    mods.A = [w, h];
+    if (pack.A) { pack.A.w = w; pack.A.h = h; }
+    answerOK = false;
+    render();
+    afterChange(L(`A 变形成 ${w}×${h} —— 面积仍是 ${w * h}。` + (pack.A ? "看 legal：邻居可能需要重摆。" : "现在把 A 放上去。"), `A reshaped to ${w}×${h} — area still ${w * h}. ` + (pack.A ? "Watch legal: the neighbors may need re-packing." : "Now place A.")));
+    void fromSlider;
+  }
+  function nudge(dx, dy) {
+    const r = pack[selected];
+    if (!r) { say(L(selected + " 还没放上网格 —— 先点一格。", selected + " is not placed yet — click a cell first."), ""); return; }
+    if (dPinned && selected === "D") { say(L("D 在这个挑战里被钉住了。", "D is pinned in this challenge."), "bad"); return; }
+    pushHistory();
+    r.x += dx; r.y += dy;
+    render(); afterChange(L(selected + " 移到 (" + r.x + "," + r.y + ")。", selected + " moved to (" + r.x + "," + r.y + ")."));
+  }
+  function removeSel() {
+    if (dPinned && selected === "D") { say(L("D 在这个挑战里被钉住了。", "D is pinned in this challenge."), "bad"); return; }
+    if (!pack[selected]) { say(L(selected + " 还没放上去。", selected + " is not placed."), ""); return; }
+    pushHistory(); delete pack[selected]; render();
+    afterChange(L(selected + " 已移除。", selected + " removed."));
+  }
+  function clearAll() {
+    pushHistory(); pack = dPinned ? {D:{x:0, y:0}} : {}; answerOK = false;
+    render(); afterChange(L("已清空" + (dPinned ? "（D 仍被钉住）。" : "。"), "Cleared" + (dPinned ? " (D stays pinned)." : ".")));
+  }
+  svg.addEventListener("click", (ev) => {
+    const pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
+    const ctm = svg.getScreenCTM().inverse();
+    const p = pt.matrixTransform(ctm);
+    const cx = Math.floor((p.x - GX) / CELL), cy = Math.floor(OH - (p.y - GY) / CELL);
+    if (cx < 0 || cy < 0 || cx >= OW || cy >= OH) return;
+    if (dPinned && selected === "D") { say(L("D 在这个挑战里被钉住了。", "D is pinned in this challenge."), "bad"); return; }
+    pushHistory();
+    pack[selected] = {x: cx, y: cy};
+    answerOK = false;
+    render();
+    afterChange(L(selected + " 放在 (" + cx + "," + cy + ")。", selected + " placed at (" + cx + "," + cy + ")."));
+  });
+
+  function afterChange(prefix) {
+    const leg = legality();
+    const st = stages[cur];
+    const allFive = Object.keys(pack).length === 5;
+    if (dPinned && allFive && leg.legal && pack.D && pack.D.x === 0 && pack.D.y === 0) {
+      say(prefix + L("  挑战 1 通过：D 钉在 (0,0) 时五块全部合法。A 因此失去了什么？（参考：A 摆 (3,0) 也行。）", "  Challenge 1 cleared: all five legal with D pinned at (0,0). What changed for A? (Reference: A(3,0) also works.)"), "good");
+      render(); return;
+    }
+    const bb = bbox();
+    if (allFive && leg.legal && bb && bb.area <= 24) {
+      say(prefix + L("  挑战 2 通过：外接矩形 " + bb.w + "×" + bb.h + " = " + bb.area + "，只浪费 " + (bb.area - 23) + " 格。", "  Challenge 2 cleared: bounding box " + bb.w + "×" + bb.h + " = " + bb.area + " — " + (bb.area - 23) + " wasted cell(s)."), "good");
+      render(); return;
+    }
+    if (leg.legal === false) say(prefix + L("  检查器：" + leg.reason + "。", "  Checker: " + leg.reason + "."), "bad");
+    else if (st && st.check()) {
+      advance();
+    } else if (st && st.id === "M3" && !answerOK && allFive && leg.legal) {
+      askDensity();
+    } else say(prefix);
+    render();
+  }
+  function advance() {
+    const st = stages[cur];
+    if (st.id === "M3" && !answerOK) {
+      askDensity();
+      return;
+    }
+    const praise = {
+      W1: L("A 是 2×3，面积仍是 6 —— 变形这半步做完了。", "A is 2×3 and the area is still 6 — reshape half done."),
+      W2: L("A 上板了。注意 legal 会随着它移动而翻转。", "A is on the board. Notice legal flips as it moves."),
+      M1: L("B、C、E 都合法放下了。接下来是难的：D。", "B, C, E placed legally. Now the hard one: D."),
+      M2: L("五块全部合法 —— 这就是一个带软模块 A 的完整合法布局。", "All five placed legally — a full legal packing with soft A."),
+      M3: L("主任务完成。去试试下面的挑战 1 或挑战 2。", "Main task complete. Try Challenge 1 or 2 below.")
+    };
+    say(praise[st.id] + (stages[cur + 1] ? L(" 下一步：", " Next: ") + stages[cur + 1].label : ""), "good");
+    cur += 1; hintLevel = 0; hintEl.textContent = "";
+    const nxt = stages[cur];
+    if (nxt && nxt.id === "M3" && !answerOK && Object.keys(pack).length === 5 && legality().legal) {
+      askDensity();
+    }
+    if (cur >= stages.length) {
+      if (!revealedEver && !usedL3) badgeEl.classList.add("show");
+    }
+    render();
+  }
+  function askDensity(pre, cls) {
+    say((pre ? pre + " " : "") + L("密度题：A 从 3×2 变成了 2×3，密度怎么变？在下面选。", "Density question: A changed from 3×2 to 2×3. What happened to the density?"), cls || "");
+    const box = document.getElementById("msg");
+    const wrap = document.createElement("div"); wrap.className = "btns"; wrap.style.marginTop = "8px";
+    [[L("没变，还是 28.75%", "It stayed 28.75%"), true], [L("变高了", "It went up"), false], [L("变低了", "It went down"), false]].forEach(([label, isRight]) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = label;
+      b.addEventListener("click", () => {
+        if (isRight) { answerOK = true; say(L("对：密度是面积除以面积，面积没变，所以 23/80 = 28.75%，A 换成什么形状都一样。", "Correct: density is area ÷ area, and no area changed — 23/80 = 28.75% whatever shape A takes."), "good"); advance(); }
+        else { askDensity(L("不对 —— 密度是 moduleArea ÷ outlineArea。这次变形里，有任何面积变了吗？再试一次。", "Not quite — density is moduleArea ÷ outlineArea. Did any area change during the reshape? Try again."), "bad"); }
+      });
+      wrap.append(b);
+    });
+    box.append(wrap);
+  }
+
+  /* ---------- check / hint / undo / reset / golden ---------- */
+  document.getElementById("btn-check").addEventListener("click", () => {
+    const st = stages[Math.min(cur, stages.length - 1)];
+    const leg = legality();
+    const missing = ["A","B","C","D","E"].filter((i) => !pack[i]);
+    if (missing.length === 5) { say(L("还什么都没放。从热身 1 开始：把 A 变形成 2×3。", "Nothing placed yet. Start with Warm-up 1: reshape A to 2×3."), ""); return; }
+    if (leg.legal === false) { say(L("检查没过，卡在合法性：" + leg.reason + "。先修这个再检查。", "Check failed at the legality step: " + leg.reason + ". Fix that, then check again."), "bad"); return; }
+    if (missing.length) { say(L("目前合法，但 " + missing.join("、") + " 还没放。当前阶段：" + st.label, "Legal so far, but " + missing.join(", ") + " not placed yet. Stage: " + st.label), ""); return; }
+    if (st && !st.check()) { say(L("五块全放好且合法 —— 但当前阶段还要求：" + st.label, "All five placed and legal — but the current stage wants more: " + st.label), ""); return; }
+    say(L("检查通过：", "Check passed for: ") + st.label, "good");
+    advance();
+  });
+  document.getElementById("btn-hint").addEventListener("click", () => {
+    const st = stages[Math.min(cur, stages.length - 1)];
+    hintLevel = Math.min(hintLevel + 1, 3);
+    hintEl.textContent = L("提示 ", "Hint ") + hintLevel + "/3" + L(" —— ", " — ") + st.hints[hintLevel - 1];
+    if (hintLevel === 3 && st.id !== "C-extra") usedL3 = true;
+  });
+  document.getElementById("btn-undo").addEventListener("click", () => {
+    const prev = history.pop();
+    if (!prev) { say(L("没有可撤销的操作。", "Nothing to undo."), ""); return; }
+    mods = prev.mods; pack = prev.pack; answerOK = false;
+    render(); say(L("已撤销。", "Undone."));
+  });
+  document.getElementById("btn-reset").addEventListener("click", () => reset(true));
+  function setGolden(v) {
+    goldenOn = v;
+    if (v) revealedEver = true;
+    document.getElementById("btn-golden").setAttribute("aria-pressed", String(v));
+    render();
+  }
+  document.getElementById("btn-golden").addEventListener("click", () => {
+    setGolden(!goldenOn);
+    say(goldenOn ? L("已叠上教学标准答案（琥珀色虚线，仅供对照 —— 这次拿不到“独立完成”徽章）。", "Teaching golden shown as dashed amber outlines (study only — no independent badge this run).") : L("已隐藏标准答案。", "Golden hidden."), "");
+  });
+
+  /* ---------- challenge 1: pin D ---------- */
+  function syncC1() {
+    document.getElementById("btn-c1").setAttribute("aria-pressed", String(dPinned));
+  }
+  document.getElementById("btn-c1").addEventListener("click", () => {
+    dPinned = !dPinned;
+    pushHistory();
+    if (dPinned) {
+      pack = {D: {x: 0, y: 0}};
+      selected = "A"; answerOK = false;
+      say(L("挑战 1：D 焊在 (0,0)（锁定）。把 A、B、C、E 围着它摆到 legal 为 true。", "Challenge 1: D is welded to (0,0). Place A, B, C, E around it until legal is true."), "");
+    } else {
+      if (pack.D && pack.D.x === 0 && pack.D.y === 0 && Object.keys(pack).length === 1) pack = {};
+      say(L("D 解锁 —— 回到自由算例。", "D unpinned — back to the free instance."), "");
+    }
+    syncC1(); render();
+  });
+
+  reset(true);
+  window.__rerenderLab = () => {
+    stages = stagesDef();
+    // a pending density question must be re-asked in the other language
+    if (document.querySelectorAll("#msg button").length > 0) {
+      askDensity();
+    } else if (hintLevel > 0) {
+      const st = stages[Math.min(cur, stages.length - 1)];
+      hintEl.textContent = L("提示 ", "Hint ") + hintLevel + "/3" + L(" —— ", " — ") + st.hints[hintLevel - 1];
+    }
+    render();
+  };
+})();
+</script>
+</body>
+</html>

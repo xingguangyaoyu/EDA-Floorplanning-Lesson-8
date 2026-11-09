@@ -1,0 +1,159 @@
+{
+  "module": "module03-03-soft-module-sizing",
+  "title": { "zh": "软模块宽高比变形 —— 自测", "en": "Soft module aspect sizing — check yourself" },
+  "passing_score": 0.75,
+  "items": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": {
+        "zh": "模块 A 被标记为软模块（soft），面积 6，宽高比界限 [0.5, 2]。这允许你做什么？",
+        "en": "Module A is soft with area 6 and aspect bounds [0.5, 2]. What does that license you to do?"
+      },
+      "choices": [
+        { "zh": "只要宽高比在界内，就可以改变 A 的面积", "en": "Change A's area as long as the aspect stays in bounds" },
+        { "zh": "只要 w·h 保持 6、且 w/h 保持在 [0.5, 2] 内，就可以改变 A 的宽和高", "en": "Change A's width and height as long as w·h stays 6 and w/h stays in [0.5, 2]" },
+        { "zh": "可以把 A 摆到任何地方，哪怕一部分伸出外框", "en": "Place A anywhere, even partly outside the outline" },
+        { "zh": "只要面积是 6，A 就可以和硬模块重叠", "en": "Let A overlap a hard module as long as the area is 6" }
+      ],
+      "answer": 1,
+      "explain": {
+        "zh": "软模块 = 在两条硬约束下换形状：面积守恒（w·h = 6）＋ 宽高比在界内。它从不允许改面积、出外框或重叠 —— 合法性仍然把关，而 B–E 都是硬模块、形状不变。",
+        "en": "Soft means shape freedom under two hard constraints: area preserved (w·h = 6) and aspect in bounds. It never licenses changing the area, leaving the outline, or overlapping — legality still gates acceptance, and B–E stay hard."
+      }
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": {
+        "zh": "外框是 10×8，五个模块面积加起来 23。死区和密度分别是多少？",
+        "en": "The outline is 10×8 and the five module areas sum to 23. What are the deadspace and the density?"
+      },
+      "choices": [
+        { "zh": "deadspace 57，density 28.75%", "en": "deadspace 57, density 28.75%" },
+        { "zh": "deadspace 57，density 23%", "en": "deadspace 57, density 23%" },
+        { "zh": "deadspace 53，density 28.75%", "en": "deadspace 53, density 28.75%" },
+        { "zh": "deadspace 80，density 57%", "en": "deadspace 80, density 57%" }
+      ],
+      "answer": 0,
+      "explain": {
+        "zh": "死区 = 80 − 23 = 57 格；密度 = 23/80 = 0.2875 = 28.75%。选 53 是把面积和算错了；选 23% 是把面积和当成了比值；80 和 57 是把两个量对调了。",
+        "en": "deadspace = 80 − 23 = 57 empty cells; density = 23/80 = 0.2875 = 28.75%. 53 comes from a wrong area sum; 23% confuses the area sum with the ratio; 80 and 57 swap the two quantities."
+      }
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": {
+        "zh": "A 的面积是 6，宽高比界限是 [0.5, 2]。用正整数宽高 (w×h) 来摆，有几种合法形状？",
+        "en": "A has area 6 and aspect bounds [0.5, 2]. How many integer shapes (w×h) stay legal?"
+      },
+      "choices": [
+        { "zh": "1 种", "en": "1" },
+        { "zh": "2 种", "en": "2" },
+        { "zh": "3 种", "en": "3" },
+        { "zh": "4 种", "en": "4" }
+      ],
+      "answer": 1,
+      "explain": {
+        "zh": "6 的因子对：1×6（宽高比 0.167，低于 0.5）、2×3（0.667，合法）、3×2（1.5，合法）、6×1（6.0，高于 2）。正好两种 —— 这就是为什么实验只给 3×2 和 2×3 两个变形按钮。",
+        "en": "The factor pairs of 6 are 1×6 (aspect 0.167, under 0.5), 2×3 (0.667, legal), 3×2 (1.5, legal), 6×1 (6.0, over 2). Exactly two — hence two reshape buttons."
+      }
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": {
+        "zh": "一个布局里模块互不重叠，每个模块都在外框内 —— 只有 E 例外：它在 x=9、宽 2，所以结束于 x=11，而外框只到 10。这个布局合法吗？",
+        "en": "A packing has no overlaps and every module is inside except E: at x=9 with width 2 it ends at x=11 while the outline ends at 10. Is it legal?"
+      },
+      "choices": [
+        { "zh": "合法 —— 只要不重叠就够了", "en": "Yes — no overlap is enough" },
+        { "zh": "合法 —— 只有一列伸出去", "en": "Yes — only one column sticks out" },
+        { "zh": "不合法 —— 合法要求每个模块都在外框内，且互不重叠，两条都要满足", "en": "No — legality requires every module inside the outline AND no overlaps" },
+        { "zh": "要看 A 是什么形状", "en": "It depends on A's shape" }
+      ],
+      "answer": 2,
+      "explain": {
+        "zh": "合法性是两段检查：每个模块都 insideOutline（x ≥ 0、y ≥ 0、x+w ≤ 10、y+h ≤ 8），以及没有正面积重叠。E 违反第一条（9+2 = 11 > 10），所以检查器报 \"E outside outline\"，跟重不重叠无关。贴边允许，伸出去不允许。",
+        "en": "Legality is a two-part check: insideOutline for every module (x ≥ 0, y ≥ 0, x+w ≤ 10, y+h ≤ 8) and no positive-area overlap. E fails the first (9+2 = 11 > 10), so the checker reports \"E outside outline\". Edge-touching is allowed; sticking out is not."
+      }
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": {
+        "zh": "A 从 3×2 合法地变形到 2×3，所有模块都重摆好了。现在的死区是多少？",
+        "en": "A is legally reshaped from 3×2 to 2×3 and everything is re-packed. What is the deadspace now?"
+      },
+      "choices": [
+        { "zh": "还是 57 —— 变形只是把空格挪了位置，消不掉它们", "en": "Still 57 — reshaping moves empty cells, it never removes them" },
+        { "zh": "变小了，因为 A 变高了", "en": "Smaller, because A is taller now" },
+        { "zh": "变大了，因为 A 占了不同的格子", "en": "Larger, because A covers different cells" },
+        { "zh": "55，因为第 6 列多出了 2 格", "en": "55, because 2 cells are freed at column 6" }
+      ],
+      "answer": 0,
+      "explain": {
+        "zh": "死区 = 外框面积 − 模块面积和 = 80 − 23 = 57，任何合法变形都如此，因为面积没变。变的是空区的形状：硬布局是 C 和 E 上方 5 格的空兜；软布局是第 6 列 2 格的缝，加 D 旁边 3 格的条。选 55 是漏掉了两种布局共有的顶部大片空区。",
+        "en": "deadspace = outlineArea − moduleAreaSum = 80 − 23 = 57 for any legal reshape, because the areas did not change. What changes is the shape of the whitespace. 55 miscounts by forgetting the top band both packs share."
+      }
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "prompt": {
+        "zh": "外接矩形（bounding box）是盖住所有已摆模块的最小矩形。硬布局和软布局的外接矩形分别是多少？",
+        "en": "The bounding box is the smallest rectangle covering all placed modules. What are the hard and soft goldens' boxes?"
+      },
+      "choices": [
+        { "zh": "硬 9×3，软 9×3", "en": "hard 9×3, soft 9×3" },
+        { "zh": "硬 9×3，软 7×3", "en": "hard 9×3, soft 7×3" },
+        { "zh": "硬 10×8，软 9×3", "en": "hard 10×8, soft 9×3" },
+        { "zh": "硬 9×2，软 9×3", "en": "hard 9×2, soft 9×3" }
+      ],
+      "answer": 0,
+      "explain": {
+        "zh": "两种布局都伸到 x = 9（E 结束于 7+2），也都在 y = 3 封顶（硬布局是 B，软布局是 A 和 B），所以外接矩形都是 9×3 = 27 格。又一次说明：总量不动，变的只是里面的排布。10×8 是容器，不是外接矩形。",
+        "en": "Both packs reach x = 9 (E ends at 7+2) and top out at y = 3 (B in the hard pack; A and B in the soft pack), so both boxes are 9×3 = 27. Another echo: the totals do not move, only the arrangement."
+      }
+    },
+    {
+      "id": "q7",
+      "type": "multiple_choice",
+      "prompt": {
+        "zh": "你把 A 改成 2×3，但 B、C、D、E 还留在硬布局的坐标上（B(3,0)、C(5,0)、D(0,2)、E(7,0)）。检查器报什么？",
+        "en": "You reshape A to 2×3 but leave B, C, D, E at the hard-golden coordinates. What does the checker report?"
+      },
+      "choices": [
+        { "zh": "合法 —— 面积又没变", "en": "legal — the area did not change" },
+        { "zh": "A overlaps D", "en": "A overlaps D" },
+        { "zh": "E outside outline", "en": "E outside outline" },
+        { "zh": "A outside outline", "en": "A outside outline" }
+      ],
+      "answer": 1,
+      "explain": {
+        "zh": "A 在 (0,0)、2×3，占 x 0–2、y 0–3。D 在 (0,2)、3×1，占 x 0–3、y 2–3。两者共享正面积的格子，所以检查器找到的第一个违规是 \"A overlaps D\"。这就是为什么每次变形都拖着一次重摆。",
+        "en": "A at (0,0) as 2×3 covers x 0–2, y 0–3. D at (0,2) as 3×1 covers x 0–3, y 2–3. They share cells with positive area, so the first violation found is \"A overlaps D\"."
+      }
+    },
+    {
+      "id": "q8",
+      "type": "multiple_choice",
+      "prompt": {
+        "zh": "挑战回顾：五块都合法地摆进 10×8 之后，外接矩形最小能压到多少（浪费几格）？",
+        "en": "Challenge recap: with all five placed legally inside 10×8, how small can the bounding box get?"
+      },
+      "choices": [
+        { "zh": "23 —— 一格不浪费", "en": "23 — zero waste" },
+        { "zh": "24 —— 正好浪费 1 格", "en": "24 — exactly one wasted cell" },
+        { "zh": "27 —— 就是标准答案那个 9×3", "en": "27 — the golden's 9×3" },
+        { "zh": "30 —— 浪费 3 格", "en": "30 — three wasted cells" }
+      ],
+      "answer": 1,
+      "explain": {
+        "zh": "外接矩形面积至少是 23（模块面积和），而 23 是质数 —— 想零浪费就得是 1×23 的矩形，对这些形状不可能。24 = 6×4 可行：A(0,0) D(3,0) B(4,1) C(0,2) E(2,2)，只空出 (3,1) 一格（穷举验证；4×6 和 8×3 也能到 24）。27 是标准答案的外接矩形 —— 合法，但不是最紧。",
+        "en": "The box must be at least 23 and 23 is prime, so zero waste would need a 1×23 box — impossible. 24 = 6×4 works: A(0,0) D(3,0) B(4,1) C(0,2) E(2,2), one free cell (verified by exhaustive search). 27 is the golden's box — legal, not tight."
+      }
+    }
+  ]
+}

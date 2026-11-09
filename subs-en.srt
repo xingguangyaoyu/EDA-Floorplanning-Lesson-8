@@ -1,0 +1,291 @@
+1
+00:00:00,042 --> 00:00:05,220
+This is lab eight of floorplanning for EDA: soft module aspect sizing.
+
+2
+00:00:05,773 --> 00:00:12,110
+Some blocks keep a fixed width and height; others may change shape as long as their area stays the same.
+
+3
+00:00:12,648 --> 00:00:17,670
+Today one module gets reshaped, and the whole packing around it has to answer.
+
+4
+00:00:18,221 --> 00:00:22,670
+By the end you will reshape it yourself and judge the result with four numbers.
+
+5
+00:00:23,322 --> 00:00:27,380
+Before any numbers, here is where this shows up on a real chip.
+
+6
+00:00:27,934 --> 00:00:34,244
+Memory blocks and analog circuits are hard: the vendor fixes their shape, so nobody reshapes them.
+
+7
+00:00:34,782 --> 00:00:41,770
+Ordinary logic is soft: its gate count fixes the area, and its standard cell rows let the shape change.
+
+8
+00:00:42,309 --> 00:00:47,864
+Production floorplanners reshape those soft blocks to close the gaps before routing starts.
+
+9
+00:00:48,415 --> 00:00:55,129
+A few percent of die area is money on every wafer, and shorter wires mean better timing and less power.
+
+10
+00:00:55,681 --> 00:01:00,872
+The real problem has hundreds of blocks, so a search algorithm replaces your hand.
+
+11
+00:01:01,410 --> 00:01:05,533
+This lesson keeps that same loop and shrinks it to numbers you can check.
+
+12
+00:01:06,210 --> 00:01:08,080
+Start with the situation.
+
+13
+00:01:08,621 --> 00:01:13,721
+The outline is a fixed rectangle, ten by eight, so its area is eighty.
+
+14
+00:01:14,272 --> 00:01:19,202
+Five modules must live inside it, and their areas add up to twenty three.
+
+15
+00:01:19,741 --> 00:01:23,564
+Four of them are hard modules: width and height never change.
+
+16
+00:01:24,103 --> 00:01:30,895
+Module A is the soft one: area locked at six, width over height free to move between one half and two.
+
+17
+00:01:31,554 --> 00:01:34,727
+The method is a short loop, and the order matters.
+
+18
+00:01:35,267 --> 00:01:41,643
+First choose a shape for A: a width and height whose product is still six, inside the aspect bounds.
+
+19
+00:01:42,181 --> 00:01:44,755
+Second, place A into the outline.
+
+20
+00:01:45,293 --> 00:01:48,999
+Third, re-pack the four hard modules around the new shape.
+
+21
+00:01:49,538 --> 00:01:54,104
+Fourth, judge the result: legal or not, and what did the numbers do.
+
+22
+00:01:54,655 --> 00:02:00,028
+Reshaping is only half the job; the re-pack decides whether the layout is legal.
+
+23
+00:02:00,666 --> 00:02:04,229
+Here is the whole instance, small enough to check by hand.
+
+24
+00:02:04,770 --> 00:02:08,307
+The outline is ten columns wide and eight rows tall.
+
+25
+00:02:08,858 --> 00:02:14,869
+A starts three wide and two tall, area six, aspect allowed between one half and two.
+
+26
+00:02:15,421 --> 00:02:21,510
+B is two by three, C is two by two, D is three by one, and E is two by two.
+
+27
+00:02:22,048 --> 00:02:27,708
+The areas are six, six, four, three, and four: twenty three in total.
+
+28
+00:02:28,246 --> 00:02:32,682
+Every number today comes from this table, and you can re-derive each one.
+
+29
+00:02:33,330 --> 00:02:39,914
+Baseline first: A keeps the hard shape, three by two, and the golden packing puts it at zero zero.
+
+30
+00:02:40,468 --> 00:02:46,830
+B sits at three zero, C at five zero, D at zero two, and E at seven zero.
+
+31
+00:02:47,382 --> 00:02:53,171
+Everything stays inside the ten by eight outline, nothing overlaps, so the packing is legal.
+
+32
+00:02:53,710 --> 00:02:59,552
+Now the accounting: module areas sum to twenty three, and the outline area is eighty.
+
+33
+00:03:00,103 --> 00:03:04,565
+Deadspace is eighty minus twenty three: fifty seven empty cells.
+
+34
+00:03:05,103 --> 00:03:11,453
+Density is twenty three over eighty: zero point two eight seven five, about twenty nine percent.
+
+35
+00:03:11,991 --> 00:03:17,273
+Keep those two numbers: they follow from the areas alone, not from any one shape.
+
+36
+00:03:17,922 --> 00:03:21,667
+Now try the laziest possible reshape and watch it fail.
+
+37
+00:03:22,208 --> 00:03:27,529
+Keep A at the same corner, zero zero, but stretch it to two wide and three tall.
+
+38
+00:03:28,080 --> 00:03:31,982
+The area check passes: two times three is still six.
+
+39
+00:03:32,521 --> 00:03:37,216
+But look at D: it sits at zero two, and A now fills that strip too.
+
+40
+00:03:37,768 --> 00:03:41,722
+The checker says it plainly: A overlaps D, illegal.
+
+41
+00:03:42,260 --> 00:03:48,597
+A reshape invalidates neighbors, so re-packing is not optional; it is the other half of reshape.
+
+42
+00:03:49,242 --> 00:03:55,514
+Here is the legal answer: A at zero zero as two by three, and the neighbors re-packed around it.
+
+43
+00:03:56,067 --> 00:04:02,495
+B moves to two zero, C to four zero, D to four two, and E stays at seven zero.
+
+44
+00:04:03,046 --> 00:04:08,159
+Run the checker again: everyone inside the outline, no overlaps, legal.
+
+45
+00:04:08,697 --> 00:04:15,763
+Now the surprise: deadspace is still fifty seven, and density is still twenty eight point seven five percent.
+
+46
+00:04:16,301 --> 00:04:22,430
+What changed is the shape of the empty cells: the hard pack has a five cell pocket above C and E.
+
+47
+00:04:22,981 --> 00:04:29,201
+The soft pack splits it: a two cell gap at column six, plus a three cell strip beside D.
+
+48
+00:04:29,752 --> 00:04:34,773
+Same area budget, different floor plan: that is what aspect freedom buys.
+
+49
+00:04:35,418 --> 00:04:40,440
+The lab panel prints five lines, and each line answers a different question.
+
+50
+00:04:40,993 --> 00:04:45,650
+Module area is twenty three: the five modules as currently shaped.
+
+51
+00:04:46,188 --> 00:04:53,892
+Outline area is eighty and never changes; deadspace is outline area minus module area, here fifty seven.
+
+52
+00:04:54,444 --> 00:05:00,116
+Density is module area over outline area: zero point two eight seven five.
+
+53
+00:05:00,655 --> 00:05:02,890
+Legal is just true or false.
+
+54
+00:05:03,428 --> 00:05:09,673
+The reason names the first violation it finds, like A overlaps D or E outside outline.
+
+55
+00:05:10,212 --> 00:05:14,830
+When your numbers disagree with the panel, the reason line is where you look first.
+
+56
+00:05:15,474 --> 00:05:21,433
+The aspect bounds are the fence: for A, width over height must stay between one half and two.
+
+57
+00:05:21,987 --> 00:05:29,013
+With area six, the integer shapes are one by six, two by three, three by two, and six by one.
+
+58
+00:05:29,552 --> 00:05:34,808
+One by six has aspect one sixth; six by one has aspect six.
+
+59
+00:05:35,346 --> 00:05:38,701
+Both leave the fence, so both are illegal shapes.
+
+60
+00:05:39,239 --> 00:05:45,797
+Only two by three and three by two stay inside, which is why the reshape buttons offer exactly those two.
+
+61
+00:05:46,349 --> 00:05:53,844
+And softness cannot lift the density: area over area, no shape of A beats twenty eight point seven five percent.
+
+62
+00:05:54,395 --> 00:05:58,558
+Softness rearranges whitespace; it never creates area.
+
+63
+00:05:59,202 --> 00:06:01,684
+One trap is worth this whole page.
+
+64
+00:06:02,225 --> 00:06:07,598
+Legal only means two things: every module inside the frame, and no overlap.
+
+65
+00:06:08,150 --> 00:06:12,572
+Five modules scattered across the ten by eight still pass that check.
+
+66
+00:06:13,123 --> 00:06:17,611
+But then the bounding box is the whole frame, and the reshape bought you nothing.
+
+67
+00:06:18,162 --> 00:06:23,275
+So read the bounding box next to legal: legality is a gate, not a score.
+
+68
+00:06:23,946 --> 00:06:27,067
+Your turn, and the lab is right under this clip.
+
+69
+00:06:27,607 --> 00:06:32,394
+Warm up: reshape A to two by three and watch the area stay six.
+
+70
+00:06:32,933 --> 00:06:40,793
+Main task: place all five modules until legal says true, any legal packing counts, it does not have to match the golden.
+
+71
+00:06:41,331 --> 00:06:45,780
+Then check the bounding box: scatter is legal, but it is not good.
+
+72
+00:06:46,331 --> 00:06:54,048
+Challenge: pin D at the origin, then hunt the tightest packing, bounding box twenty four or less, one wasted cell.
+
+73
+00:06:54,586 --> 00:06:59,477
+Then take the quiz, and next lesson we pin a macro at the origin for good.
