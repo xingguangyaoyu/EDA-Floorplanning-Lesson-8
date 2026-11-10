@@ -45,7 +45,7 @@ td.mono,.mono{font-family:ui-monospace,Consolas,monospace;color:var(--teal)}
 .lab{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:16px;margin-top:10px}
 .labgrid{display:grid;gap:16px;grid-template-columns:minmax(300px,1.1fr) minmax(280px,1fr)}
 @media (max-width:840px){.labgrid{grid-template-columns:1fr}}
-#fp{width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel2);touch-action:manipulation}
+#fp{width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel2);touch-action:none}
 .btns{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px}
 button{font:inherit;border:1px solid var(--line);background:var(--panel2);border-radius:8px;padding:9px 14px;cursor:pointer;color:var(--ink);min-height:44px}
 button:hover{border-color:var(--teal);color:var(--teal)}
@@ -93,7 +93,15 @@ details p{margin:10px 0;color:var(--muted)}
 footer{margin-top:52px;color:var(--dim);font-size:13px;border-top:1px solid var(--line);padding-top:14px}
 ul.tight{margin:6px 0;padding-left:22px}
 ul.tight li{margin:6px 0;max-width:72ch}
-@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+/* ---- 动效：只服务因果（SKILL §4.5） ---- */
+@keyframes fp-pop{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+@keyframes fp-alert{0%,100%{stroke:#ef4444;stroke-width:1.5}50%{stroke:#fca5a5;stroke-width:4}}
+.fp-module{animation:fp-pop .18s ease-out;transform-box:fill-box;transform-origin:center}
+.fp-bad{animation:fp-alert .45s ease-in-out 2}
+.tight{height:6px;border-radius:3px;background:#1b2740;overflow:hidden;margin:10px 0 4px}
+.tight-bar{display:block;height:100%;width:0;background:linear-gradient(90deg,#2dd4bf,#34d399);transition:width .25s ease-out}
+.tightcap{font-family:ui-monospace,Consolas,monospace;font-size:13px;color:var(--muted);margin:0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body class="lang-zh">
@@ -301,6 +309,8 @@ ul.tight li{margin:6px 0;max-width:72ch}
         <div>
           <div class="readout">
             <p class="metrics" id="metrics"></p>
+            <div class="tight" role="img" aria-label="bounding box tightness"><span class="tight-bar" id="tightfill"></span></div>
+            <p class="tightcap" id="tightcap"></p>
           </div>
           <div id="msg" role="status"></div>
           <div class="btns">
@@ -773,6 +783,8 @@ window.__renderQuiz = renderQuiz;
 
   let mods, pack, selected, history, dPinned, goldenOn, revealedEver;
   let stages, cur, hintLevel, usedL3;
+  let drag = null, justDragged = false;
+  const touched = {};   // id -> ms，用于入场动效（同一次操作会渲染两次）
   const DENSITY = null; // computed
 
   const MODS = () => mods;
@@ -889,14 +901,37 @@ window.__renderQuiz = renderQuiz;
           fill:"none", stroke:"#f59e0b", "stroke-width":2, "stroke-dasharray":"6 5", opacity:0.9}));
       }
     }
+    // 冲突对（用于描边脉冲，不用文字颜色代替）
+    const bad = new Set();
+    {
+      const ids = ["A","B","C","D","E"].filter((i) => pack[i]);
+      for (let i = 0; i < ids.length; i++)
+        for (let j = i + 1; j < ids.length; j++)
+          if (overlap(ids[i], ids[j])) { bad.add(ids[i]); bad.add(ids[j]); }
+    }
     for (const id of ["A","B","C","D","E"]) {
       if (!pack[id]) continue;
       const [w, h] = mods[id];
       const r = pack[id];
       const rect = el("rect", {x:GX+r.x*CELL+1, y:GY+(OH-r.y-h)*CELL+1, width:w*CELL-2, height:h*CELL-2,
         fill:COL[id], "fill-opacity":0.85, stroke:id === selected ? "#ffffff" : "#0b1220", "stroke-width":id === selected ? 2.5 : 1});
-      rect.style.cursor = "pointer";
-      rect.addEventListener("click", (ev) => { ev.stopPropagation(); selected = id; render(); });
+      rect.style.cursor = "grab";
+      if (touched[id] && Date.now() - touched[id] < 400 && !reducedMotion()) rect.classList.add("fp-module");
+      if (bad.has(id) && !drag && !reducedMotion()) rect.classList.add("fp-bad");
+      rect.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        if (justDragged) { justDragged = false; return; }
+        selected = id; render();
+      });
+      rect.addEventListener("pointerdown", (ev) => {
+        if (dPinned && id === "D") return;
+        ev.stopPropagation();
+        selected = id;
+        drag = { id, moved: false };
+        justDragged = false;
+        try { svg.setPointerCapture(ev.pointerId); } catch (e) {}
+        render();
+      });
       svg.append(rect);
       const t = el("text", {x:GX+(r.x+w/2)*CELL, y:GY+(OH-r.y-h/2)*CELL+5, "text-anchor":"middle",
         "font-size":16, "font-weight":700, fill:"#0b1220", "pointer-events":"none"});
@@ -915,9 +950,28 @@ window.__renderQuiz = renderQuiz;
       `<span class="m-dim">placed:</span> <b>${Object.keys(pack).length}/5</b>` +
       (bb ? ` <span class="m-dim">· bbox:</span> <b>${bb.w}×${bb.h} = ${bb.area}</b>` : "") +
       (dPinned ? ` <span class="m-dim">· D pinned (0,0)</span>` : "");
+    // 压紧度条：23 / bbox 面积；24 格时几乎满格
+    const fill = document.getElementById("tightfill");
+    const cap = document.getElementById("tightcap");
+    if (fill && cap) {
+      if (bb) {
+        const allFive = Object.keys(pack).length === 5;
+        // 只放了一部分时按"已放面积 / bbox"算；全放完才是 23 / bbox
+        const used = allFive ? 23 : Object.keys(pack).reduce((s, id) => s + mods[id][0] * mods[id][1], 0);
+        fill.style.width = Math.min(100, (used / bb.area) * 100).toFixed(1) + "%";
+        cap.textContent = allFive
+          ? `bbox ${bb.w}×${bb.h} = ${bb.area} · ` + L("浪费 " + (bb.area - 23) + " 格", "waste " + (bb.area - 23) + " cells")
+          : `bbox ${bb.w}×${bb.h} = ${bb.area} · ` + L(`已放 ${used} / 还差 ${5 - Object.keys(pack).length} 块`, `${used} placed / ${5 - Object.keys(pack).length} to go`);
+      } else {
+        fill.style.width = "0%";
+        cap.textContent = L("放下模块后才开始算压紧度", "tightness appears once something is placed");
+      }
+    }
     renderStages();
     renderButtons();
   }
+
+  const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function renderStages() {
     stagesEl.replaceChildren();
@@ -1018,18 +1072,63 @@ window.__renderQuiz = renderQuiz;
     pushHistory(); pack = dPinned ? {D:{x:0, y:0}} : {}; answerOK = false;
     render(); afterChange(L("已清空" + (dPinned ? "（D 仍被钉住）。" : "。"), "Cleared" + (dPinned ? " (D stays pinned)." : ".")));
   }
+  // 屏幕坐标 → 格子（点选与拖拽共用）
+  function cellOf(ev) {
+    const pt = svg.createSVGPoint();
+    pt.x = ev.clientX; pt.y = ev.clientY;
+    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    return { x: Math.floor((p.x - GX) / CELL), y: Math.floor(OH - (p.y - GY) / CELL) };
+  }
+  const inGrid = (c) => c.x >= 0 && c.y >= 0 && c.x < OW && c.y < OH;
+
+  // 拖拽：边拖边算合法性，reason 会跟着变红变绿（这是拖拽最大的教学价值）
+  svg.addEventListener("pointermove", (ev) => {
+    if (!drag) return;
+    const c = cellOf(ev);
+    if (!inGrid(c)) return;
+    const r = pack[drag.id];
+    if (!r || (r.x === c.x && r.y === c.y)) return;
+    if (!drag.moved) pushHistory();
+    drag.moved = true;
+    answerOK = false;
+    pack[drag.id] = { x: c.x, y: c.y };
+    touched[drag.id] = Date.now();
+    render();
+    const leg = legality();
+    say(leg.legal === false
+      ? L("拖动中 —— " + leg.reason, "dragging — " + leg.reason)
+      : L("拖动中 —— 松手落位", "dragging — release to drop"),
+      leg.legal === false ? "bad" : "");
+  });
+
+  svg.addEventListener("pointerup", (ev) => {
+    if (!drag) return;
+    const d = drag;
+    drag = null;
+    try { svg.releasePointerCapture(ev.pointerId); } catch (e) {}
+    if (d.moved) {
+      justDragged = true;
+      const r = pack[d.id];
+      afterChange(L(d.id + " 拖到 (" + r.x + "," + r.y + ")。", d.id + " dropped at (" + r.x + "," + r.y + ")."));
+    } else {
+      render();
+    }
+  });
+
+  svg.addEventListener("pointercancel", () => { drag = null; render(); });
+
+  // 点选落位（拖不了/键盘用户仍可用）：点芯片 → 点空格
   svg.addEventListener("click", (ev) => {
-    const pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
-    const ctm = svg.getScreenCTM().inverse();
-    const p = pt.matrixTransform(ctm);
-    const cx = Math.floor((p.x - GX) / CELL), cy = Math.floor(OH - (p.y - GY) / CELL);
-    if (cx < 0 || cy < 0 || cx >= OW || cy >= OH) return;
+    if (justDragged) { justDragged = false; return; }
+    const c = cellOf(ev);
+    if (!inGrid(c)) return;
     if (dPinned && selected === "D") { say(L("D 在这个挑战里被钉住了。", "D is pinned in this challenge."), "bad"); return; }
     pushHistory();
-    pack[selected] = {x: cx, y: cy};
+    pack[selected] = {x: c.x, y: c.y};
+    touched[selected] = Date.now();
     answerOK = false;
     render();
-    afterChange(L(selected + " 放在 (" + cx + "," + cy + ")。", selected + " placed at (" + cx + "," + cy + ")."));
+    afterChange(L(selected + " 放在 (" + c.x + "," + c.y + ")。", selected + " placed at (" + c.x + "," + c.y + ")."));
   });
 
   function afterChange(prefix) {
