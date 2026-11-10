@@ -73,3 +73,20 @@ python -m RangeHTTPServer -b 127.0.0.1 8080
 ---
 
 课程模块：`module03-03-soft-module-sizing`（learn_floorplanning）
+
+## 仓库结构
+
+```
+index.html            ← 课程页（GitHub Pages 首页，打开这个）
+video.mp4             7:00，1920×1080，无烧录字幕
+poster.png            视频封面
+subs-en|zh.vtt/.srt   软字幕双轨
+slides.pdf            12 页幻灯片
+slides/01..12.png     单页图（页面图集用）
+transcript.md         完整口播稿
+quiz.json             8 道自测题（中英双语）
+skill/                制作这套内容的 skill，不属于课程页
+  └── course-lesson-pack/{SKILL.md, reference.md}
+```
+
+> 根目录不留散图：幻灯片只在 `slides/` 里放一份。
